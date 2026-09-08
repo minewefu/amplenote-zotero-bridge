@@ -1,0 +1,10 @@
+{
+  "version": "0.2.1",
+  "files": {
+    "core.mjs": "8444afe74333a786ac8a61bf2451720788c99776d024b44605ffc5994c169c9d",
+    "plugin.mjs": "e36df1214c87fa17d76d4d5eb574c20b627eef0a88a3e8647fe95050d109fbf8",
+    "dist/plugin.js": "8fcc935e5020001b0c84a7632f13449efa97f6e861bd7b85f33905937872f837",
+    "dist/PLUGIN_NOTE.md": "84d1678b2c61e432ee3d5844b1e82cd40f81571abcafbd99edbbff2d9fd929a2"
+  },
+  "liveHostVerified": false
+}

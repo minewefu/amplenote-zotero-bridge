@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-09-08T06:34:39.305Z",
+  "nodeVersion": "v24.18.0",
+  "command": "node --test --test-reporter=tap test/core.test.mjs test/plugin.test.mjs test/auto-sync.test.mjs",
+  "exitCode": 0,
+  "tests": 70,
+  "passed": 70,
+  "failed": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "scope": "Synthetic Zotero responses, in-memory Amplenote API fixtures, and a deterministic automatic-sync clock; includes evaluation and execution of the generated literal-object bundle. No authenticated host execution or real browser timer-lifecycle check.",
+  "authenticatedHostIntegrationVerified": false,
+  "paymentVerified": false,
+  "fileHashes": {
+    "core.mjs": {
+      "sha256": "8444afe74333a786ac8a61bf2451720788c99776d024b44605ffc5994c169c9d",
+      "matchesBuild": true
+    },
+    "plugin.mjs": {
+      "sha256": "e36df1214c87fa17d76d4d5eb574c20b627eef0a88a3e8647fe95050d109fbf8",
+      "matchesBuild": true
+    },
+    "dist/plugin.js": {
+      "sha256": "8fcc935e5020001b0c84a7632f13449efa97f6e861bd7b85f33905937872f837",
+      "matchesBuild": true
+    },
+    "dist/PLUGIN_NOTE.md": {
+      "sha256": "84d1678b2c61e432ee3d5844b1e82cd40f81571abcafbd99edbbff2d9fd929a2",
+      "matchesBuild": true
+    },
+    "test/core.test.mjs": {
+      "sha256": "df1044c4754a9c47e59abfe4aa6dbdbda0860b13979f4dbf25b2f996b1106330"
+    },
+    "test/plugin.test.mjs": {
+      "sha256": "ebce4d0432b627e9ed0732e6ee734bb20ac50229f35f6dbf4012ea16826be781"
+    },
+    "test/auto-sync.test.mjs": {
+      "sha256": "f37e047d0b21afe91d4f0d0ca6e33ac91e3936afe5be7487ea004521bdf30356"
+    },
+    "test/fixtures.mjs": {
+      "sha256": "17c3d92eba6a356088f380f2636125ae213024b5c111b00bbe10857384b56ee8"
+    },
+    "build.mjs": {
+      "sha256": "8a5f9a0ad1a59c4fac59fd6260e9671f9115f27d61629c4c4209d61b450235d3"
+    },
+    "verify.mjs": {
+      "sha256": "d26b2eaaf7dd4dd9281060ada7e0acda07544a0249b11801a23581827a19ec95"
+    }
+  },
+  "verified": true
+}
