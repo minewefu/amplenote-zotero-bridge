@@ -32,7 +32,7 @@ After checking the selection, choose **Start automatic sync in this client** and
 
 Use **Show automatic sync status** to see the last result and next check, or **Stop automatic sync** to stop. A stop before note mutation prevents that import. A reference already being written finishes; later references are left untouched. Success is quiet. Errors or detected settings changes pause the driver and require an explicit restart. Timer polls inspect synchronized `app.settings`; a navigation callback can refresh settings through its live context. Cross-device changes are subject to the host's settings synchronization delay. Opening Configure also stops it, even if the dialog is cancelled. A manual action postpones an overlapping automatic check by 30 seconds.
 
-Run automatic sync on only one client. Enabled state is held in memory and is not restored by a fresh plugin instance. There is no closed-app service. Browser throttling can delay checks; navigation schedules one overdue check. The actual Amplenote iframe lifetime, reload, disable, mobile-background, and retained app-context behavior still require host verification. Stop automatic sync before editing or replacing the plugin code.
+Run automatic sync on only one client. Enabled state is held in memory and is not restored by a fresh plugin instance. There is no closed-app service. Browser throttling can delay checks; navigation schedules one overdue check. Repeated timer-driven imports, navigation, stop, and fresh state after reload have been checked in Chrome. Reload while enabled, disable behavior, mobile/background operation, and the full lifecycle matrix still require host verification. Stop automatic sync before editing or replacing the plugin code.
 
 ## Configuration
 
@@ -60,7 +60,7 @@ Replace the example collection key with your own or use an empty list. Each filt
 
 ## Current limitations
 
-Manual sync and opt-in periodic sync are implemented; periodic sync is locally tested and awaits host verification. Only cloud-synced Zotero data is available. PDF image/ink annotations point to the source rather than exporting crops. Nunjucks templates, Better BibTeX integration, arbitrary export formats, local-only files, and whole-article HTML capture are not implemented. These differences matter because the bounty explicitly requests parity with an Obsidian integration; see `HOST_TEST_RESULTS.md`.
+Manual sync and opt-in periodic sync have passed selected public-library host checks. Private-library, live source-update, PDF-copy, and remaining lifecycle scenarios are still unverified. Only cloud-synced Zotero data is available. PDF image/ink annotations point to the source rather than exporting crops. Nunjucks templates, Better BibTeX integration, arbitrary export formats, local-only files, and whole-article HTML capture are not implemented. These differences matter because the bounty explicitly requests parity with an Obsidian integration; see `HOST_TEST_RESULTS.md`.
 
 Only one client should sync a library at a time. Cross-device transactions are unavailable in this implementation. A failed operation may leave an empty tagged note or an uploaded attachment; re-running can recover the note but does not guarantee attachment deduplication after partial failure. The latest revision marker is checked after writes, but that check is not proof that every rendered character survived host conversion.
 
