@@ -25,7 +25,9 @@ node verify.mjs
 
 All 94 local tests pass on Node 24.18.0. They cover source preservation, file-version checks, long indexed documents, partial/missing indexes, independent text/library versions, interruptions, retries, manual annotations and automatic-sync cancellation. The generated bundle is executed in the test harness. `marked` and `jsdom` are development dependencies; the distributed plugin does not load them.
 
-The public Zotero API was checked separately and returned a 5,911-character HTML index with its own content version, plus an unavailable PDF index. A live Amplenote diagnostic used original synthetic Zotero responses and real note APIs to verify a 70,318-character article, updates, repeat imports, reversions and saved editor annotations in one client. This is component coverage, not a claim of verified private/group-library integration. See `HOST_TEST_RESULTS.md`.
+Real private-library checks also pass for the selected cases: collection/tag/type filtering, initial import, unchanged repeat, a 59,638-character indexed article, index-only source changes, a scheduled abstract update, reversion/reuse and saved reading notes in one client. The source was an original fixture stored in an owner-controlled Zotero account, accessed by the plugin with a dedicated read-only key. A temporary read-only diagnostic compared native note content with the actual authenticated Zotero index; it was removed after testing. See `HOST_TEST_RESULTS.md` for scope and remaining gaps.
+
+Earlier component checks used a public 5,911-character HTML index and a 70,318-character synthetic-response fixture with real Amplenote APIs. Those results are recorded separately from the subsequent private-library integration.
 
 ## Install for testing
 
@@ -75,6 +77,6 @@ Browser PDF copying is unresolved. Zotero's file server does not permit the plug
 
 Only synced indexed text is available through the web API. Local-only files, PDF image/ink crops, Better BibTeX workflows, Nunjucks templates and arbitrary export formats remain outside this candidate. The bounty brief qualifies feature parity as “or as close as possible”; sponsor acceptance of this scope is still required.
 
-Private/group access, owner-controlled live Zotero mutations, full mobile/background/disable lifecycle coverage, the two demonstration recordings and directory publication remain unfinished. Local tests and component probes are not bounty acceptance or received earnings.
+Group-library integration, remaining failure cases, full mobile/background/disable lifecycle coverage, the two demonstration recordings and directory publication remain unfinished. Passing the listed private-library checks is not bounty acceptance or received earnings.
 
 Original code is MIT-licensed; see `LICENSE`.

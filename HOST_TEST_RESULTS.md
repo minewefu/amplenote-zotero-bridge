@@ -1,5 +1,17 @@
 # Amplenote host test results
 
+## September 9 checkpoint: real private-library integration
+
+After account creation and email verification, an original test collection was provisioned in a dedicated private Zotero library through the documented API. A request without credentials returned HTTP 404; the integration's dedicated read-only key could read the same reference and its text index. The setup key was separate, was never given to the plugin, and was revoked after provisioning and source mutations; a subsequent request with it returned HTTP 403.
+
+The published 0.3.0 source was installed and copied back exactly. The collection contained one selected journal article and an excluded book, plus an original child note, a 60,478-byte text file and a 1,924-byte PDF. Collection, tag and item-type filters selected the intended single reference. This is real authenticated Zotero-to-Amplenote coverage, not substituted network responses.
+
+The first import created one reference and two linked notes preserving the complete normalized 59,638-character text index. An unchanged repeat created nothing. Updating only the synced text index to 59,730 characters left the source parent at version 3, yet the next import added a reference revision and two new text notes. A temporary read-only diagnostic used real native note APIs and the authenticated Zotero endpoint to verify complete text, saved reading-note preservation and note counts before and after each source change. The production import actions remained unchanged.
+
+A one-minute automatic run first reported unchanged. After the source abstract changed to revision two, the next scheduled run reported one update and no failures. Native readback confirmed the new abstract, the saved annotation, one parent and four text notes. Automatic sync was then stopped. Reverting the source index to its original text added a reference revision and reused the original two text-note UUIDs. The saved reading note survived all three updates; the final counts were one reference, four additive revisions and four text notes.
+
+The temporary verification action was removed and the published 0.3.0 source restored exactly. PDF copying remains disabled: successful Zotero file upload is not evidence of successful PDF transfer through the Amplenote plugin. Group libraries, remaining failure/lifecycle cases, mobile behavior, recordings, directory publication and bounty acceptance remain unverified.
+
 ## September 9 checkpoint: 0.3.0 indexed text
 
 The current client successfully read Zotero's public example: its HTML snapshot had 5,911 indexed characters at content version 3660, while the library version was 3663. The PDF index returned unavailable. No article text was retained in the public API report.

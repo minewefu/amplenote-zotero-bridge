@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.0 validation follow-up — September 9, 2026
+
+Published and installed the exact generated bundle. Real private-library tests passed for initial import, complete indexed text, unchanged repeat, index-only source changes, a scheduled abstract update and text reversion/reuse. Native readback confirmed that a saved reading note survived each update. The separate temporary setup key was revoked; automatic sync was stopped and temporary diagnostics removed. Group and remaining lifecycle coverage, browser PDF transfer and submission deliverables remain unfinished.
+
 ## 0.3.0 — September 9, 2026
 
 Added indexed HTML/PDF/text import through Zotero's documented full-text API. Content-index versions are kept separate from the library version, and missing/partial indexes are reported accurately. Long text is split into versioned linked notes under the host insertion limit; identical parts are reused, and changed managed text is preserved for review.
