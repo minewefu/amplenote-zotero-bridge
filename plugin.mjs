@@ -36,18 +36,53 @@ async function findImportedNote(app, c, item) {
   const body = await app.getNoteContent(note);
   if (typeof body !== "string") throw new Error("Amplenote returned invalid note content.");
   const ids = [...body.matchAll(/^Reference ID: ([^\r\n]+)$/gm)].map(m => m[1]);
-  if (body.trim() && (!ids.length || ids.some(id => id !== Core.identity(c, item)))) {
+  if (body.trim() && body.trim() !== "\\" && (!ids.length || ids.some(id => id !== Core.identity(c, item)))) {
     throw new Error("The matching note does not contain this reference ID. No content was changed.");
   }
   return { note, body };
 }
 
+async function ensureTextPart(app, c, part, mustExist = false) {
+  const matches = await app.filterNotes({ tag: part.tag });
+  if (!Array.isArray(matches) || matches.length > 1) throw new Error("Multiple or invalid notes match an indexed text part. Review them before syncing.");
+  let note = matches[0];
+  if (!note && mustExist) throw new Error("An imported indexed text note is missing. Restore or review it before syncing this unchanged reference.");
+  let body = note ? await app.getNoteContent(note) : "";
+  if (typeof body !== "string") throw new Error("Amplenote returned invalid indexed text content.");
+  const empty = !body.trim() || body.trim() === "\\";
+  if (empty) {
+    if (mustExist) throw new Error("An imported indexed text part was cleared. Review its note before syncing.");
+    if (!note) {
+      const uuid = await app.createNote(part.title, [part.tag, c.destinationTag + "/indexed-text"]);
+      if (typeof uuid !== "string" || !uuid) throw new Error("Amplenote did not return an indexed text note ID.");
+      note = { uuid };
+    }
+    await app.insertNoteContent(note, part.markdown, { atEnd: false });
+    body = await app.getNoteContent(note);
+  }
+  const managed = Core.managedTextPart(body, part);
+  const html = await app.htmlFromContent(Core.literalExportForRendering(managed));
+  if (typeof html !== "string" || Core.canonicalHtmlText(html) !== Core.canonicalPlainText(part.chunk)) {
+    throw new Error("An indexed text part differs from the source. Its note was preserved; review it before syncing again.");
+  }
+  const url = Core.safeURL(await app.getNoteURL(note));
+  if (!url) throw new Error("Amplenote did not return a valid indexed text note URL.");
+  return { attachmentKey: part.attachmentKey, index: part.index, count: part.count, url };
+}
+
 async function importReference(app, client, snapshot, canContinue = () => true) {
-  const c = client.config, { item, children, annotations, digest } = snapshot;
+  const c = client.config, { item, children, annotations, digest, fulltexts, textParts } = snapshot;
   const found = await findImportedNote(app, c, item);
   if (!canContinue()) throw new SyncCancelled();
   const newestDigest = latestRevision(found?.body);
+  if (textParts.length && (typeof DOMParser !== "function" || typeof app.htmlFromContent !== "function")) {
+    throw new Error("This client cannot validate indexed text notes. Update the client or disable importFullText.");
+  }
   if (newestDigest === digest) {
+    for (const part of textParts) {
+      if (!canContinue()) throw new SyncCancelled();
+      await ensureTextPart(app, c, part, true);
+    }
     for (const tag of Core.tagNames(c, item)) {
       if (await app.addNoteTag(found.note, tag) === false) throw new Error("Amplenote could not apply a requested reference tag.");
     }
@@ -55,7 +90,8 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
   }
 
   // Validate the complete text and download bounded files before creating a note.
-  Core.render(c, item, children, annotations, {}, digest);
+  const placeholderLinks = textParts.map(part => ({ ...part, url: "https://www.amplenote.com/notes/local-00000000-0000-0000-0000-000000000000" }));
+  Core.render(c, item, children, annotations, {}, digest, fulltexts, placeholderLinks);
   const downloads = [];
   if (c.copyAttachments) {
     for (const attachment of children) {
@@ -66,6 +102,14 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
         downloads.push([Core.itemKey(attachment), await client.downloadAttachment(attachment)]);
       }
     }
+  }
+
+  // Each finished text part is reusable after interruption. Publish the parent
+  // revision only after every part is verified, without overwriting old parts.
+  const textLinks = [];
+  for (const part of textParts) {
+    if (!canContinue()) throw new SyncCancelled();
+    textLinks.push(await ensureTextPart(app, c, part));
   }
 
   // Once note mutation starts, finish this reference before honoring a stop.
@@ -87,7 +131,10 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
     if (!url) throw new Error("Amplenote did not return a valid attachment URL.");
     copies[key] = { url };
   }
-  const content = Core.render(c, item, children, annotations, copies, digest);
+  const content = Core.render(c, item, children, annotations, copies, digest, fulltexts, textLinks);
+  if (found && await app.getNoteContent(note) !== found.body) {
+    throw new Error("The reference note changed while this import was prepared. Its content was not updated; review it and sync again.");
+  }
   // Prepending leaves all previous imported revisions and manual text intact.
   // There is no cross-client transaction in the host API: use one syncing client.
   await app.insertNoteContent(note, content + "\n", { atEnd: false });
@@ -101,10 +148,12 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
 }
 
 async function snapshotItem(client, item) {
-  const { children, annotations } = await client.details(item);
-  const digest = await Core.revision(client.config, item, children, annotations);
-  Core.render(client.config, item, children, annotations, {}, digest);
-  return { item, children, annotations, digest };
+  const { children, annotations, fulltexts } = await client.details(item);
+  const digest = await Core.revision(client.config, item, children, annotations, fulltexts);
+  const textParts = await Core.fullTextParts(client.config, fulltexts);
+  const placeholderLinks = textParts.map(part => ({ ...part, url: "https://www.amplenote.com/notes/local-00000000-0000-0000-0000-000000000000" }));
+  Core.render(client.config, item, children, annotations, {}, digest, fulltexts, placeholderLinks);
+  return { item, children, annotations, digest, fulltexts, textParts };
 }
 
 async function syncReferences(app, client, { items, canContinue = () => true } = {}) {
@@ -340,7 +389,7 @@ export function createPlugin({ fetchImpl = globalThis.fetch, now = () => Date.no
         return this._execute(app, async client => {
           const items = await client.items();
           if (!items.length) { await app.alert("No references match the configured filters."); return null; }
-          const answer = await app.alert(`Import ${items.length} references? New revisions will be added above existing content. Run sync from only one client at a time.`, {
+          const answer = await app.alert(`Import ${items.length} references? New revisions will be added above existing content.${client.config.importFullText ? " Available indexed text will be copied into linked notes; long documents may use several parts." : ""} Run sync from only one client at a time.`, {
             actions: [{ label: "Import references", value: "import" }],
             primaryAction: { label: "Cancel" },
           });
@@ -359,7 +408,7 @@ export function createPlugin({ fetchImpl = globalThis.fetch, now = () => Date.no
         }
         return this._execute(app, async client => {
           const generation = this._auto.generation, c = client.config;
-          const answer = await app.alert(`Automatically import the configured ${c.libraryType}/${c.libraryId} selection now and every ${c.autoSyncMinutes} minutes while this Amplenote client stays open? New revisions and tags will be added; ${c.copyAttachments ? "uploaded PDFs will also be copied" : "files will remain source links"}. Enable this on only one client. Closing or reloading the app stops it; errors pause it until you restart.`, {
+          const answer = await app.alert(`Automatically import the configured ${c.libraryType}/${c.libraryId} selection now and every ${c.autoSyncMinutes} minutes while this Amplenote client stays open? New revisions and tags will be added; ${c.copyAttachments ? "uploaded PDFs will also be copied" : "files will remain source links"}.${c.importFullText ? " Available indexed text will be copied into linked notes." : ""} Enable this on only one client. Closing or reloading the app stops it; errors pause it until you restart.`, {
             actions: [{ label: "Start automatic sync", value: "start-auto" }], primaryAction: { label: "Cancel" },
           });
           if (answer !== "start-auto" || generation !== this._auto.generation) return null;

@@ -1,10 +1,10 @@
 {
-  "version": "0.2.2",
+  "version": "0.3.0",
   "files": {
-    "core.mjs": "01e67c3ee3a5abafd5c3c672e8dfc66c901c3029b36a06c38b035e998efadbfb",
-    "plugin.mjs": "ef1726e0fcf9556659b5a7e9a24cbc4a3ae8ee007287eae0ae7d8c51fd5e4c2e",
-    "dist/plugin.js": "8e724873db88ae20d5063c710d252c703240edddce964004b32ca5272f13bd86",
-    "dist/PLUGIN_NOTE.md": "dc52ad45ab7f6710843a2f4c51ce3ee7f379597b65653a8d48c927c18edef6bc"
+    "core.mjs": "22231a23632e75990129468a115598c17875d995a830b27daf05113ec2d840b2",
+    "plugin.mjs": "1a5032cef59addc705f15d52e2c6e37a1e134e43ad9abd3608f7c6136cd12ee4",
+    "dist/plugin.js": "da5e15e38dc8702faa7cb714c8f19e6fe1c36f278cf5ca7c2e671677ad31edf5",
+    "dist/PLUGIN_NOTE.md": "73306cff2e3bb3d6ca8b29dbdd03813a061cc9f8b562af6fb9143a5655f2a0c1"
   },
   "liveHostVerified": false
 }

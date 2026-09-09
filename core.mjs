@@ -50,8 +50,10 @@ export const ZoteroCore = (() => {
       style: input.style || "apa",
       locale: input.locale || "en-US",
       copyAttachments: input.copyAttachments === true,
+      importFullText: input.importFullText !== false,
       maxItems: input.maxItems ?? 1000,
       maxAttachmentBytes: input.maxAttachmentBytes ?? 10485760,
+      maxFullTextBytes: input.maxFullTextBytes ?? 10485760,
       autoSyncMinutes: input.autoSyncMinutes ?? 15,
     };
     if (!["users", "groups"].includes(c.libraryType)) throw new Error("Library type must be users or groups.");
@@ -76,6 +78,10 @@ export const ZoteroCore = (() => {
     if (!Number.isSafeInteger(c.maxItems) || c.maxItems < 1 || c.maxItems > 10000) throw new Error("maxItems must be 1–10000.");
     if (!Number.isSafeInteger(c.maxAttachmentBytes) || c.maxAttachmentBytes < 1 || c.maxAttachmentBytes > 52428800) {
       throw new Error("Attachment limit must be between 1 byte and 50 MiB.");
+    }
+    if (input.importFullText !== undefined && typeof input.importFullText !== "boolean") throw new Error("importFullText must be true or false.");
+    if (!Number.isSafeInteger(c.maxFullTextBytes) || c.maxFullTextBytes < 1 || c.maxFullTextBytes > 52428800) {
+      throw new Error("Full-text response limit must be between 1 byte and 50 MiB.");
     }
     if (!Number.isSafeInteger(c.autoSyncMinutes) || c.autoSyncMinutes < 1 || c.autoSyncMinutes > 1440) {
       throw new Error("autoSyncMinutes must be a whole number from 1 to 1440.");
@@ -145,16 +151,105 @@ export const ZoteroCore = (() => {
       (!c.itemTypes.length || c.itemTypes.includes(d.itemType));
   }
 
-  async function revision(c, item, children, annotations) {
-    // Include child bodies: children can change without the parent's version changing.
-    const parts = [identity(c, item), item, [...children].sort((a, b) => itemKey(a).localeCompare(itemKey(b))),
-      [...annotations].sort((a, b) => itemKey(a).localeCompare(itemKey(b))), c.style, c.locale, c.copyAttachments];
+  async function hashText(text) {
     if (!globalThis.crypto?.subtle) throw new Error("This client does not expose Web Crypto; sync is unavailable.");
-    const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(parts)));
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
   }
 
-  function render(c, item, children, annotations, copies, digest) {
+  async function revision(c, item, children, annotations, fulltexts = []) {
+    // Include child bodies: children can change without the parent's version changing.
+    const parts = [identity(c, item), item, [...children].sort((a, b) => itemKey(a).localeCompare(itemKey(b))),
+      [...annotations].sort((a, b) => itemKey(a).localeCompare(itemKey(b))), c.style, c.locale, c.copyAttachments];
+    if (fulltexts.length) parts.push([...fulltexts].sort((a, b) => a.key.localeCompare(b.key)));
+    return hashText(JSON.stringify(parts));
+  }
+
+  function textCoverage(text) {
+    if (text.status === "unavailable") return "No synced text index is available from Zotero.";
+    for (const unit of ["Pages", "Chars"]) {
+      const indexed = text["indexed" + unit], total = text["total" + unit];
+      if (indexed !== undefined) {
+        return `Zotero indexed ${indexed} of ${total} ${unit === "Pages" ? "pages" : "characters"}.${indexed < total ? " This is a partial index." : total === 0 ? " Coverage is not established." : ""}`;
+      }
+    }
+    return "Zotero did not report index coverage.";
+  }
+
+  // Escape every CommonMark punctuation character: indexed text is literal prose.
+  function escapePlainText(text) {
+    return text.replace(/[!-/:-@\[-`{-~]/g, "\\$&");
+  }
+
+  function canonicalPlainText(text) { return text.replace(/\s+/gu, " ").trim(); }
+
+  // Native exports leave literal HTML delimiters/entities unescaped. This is
+  // applied only to our managed literal-text region before rendering it again.
+  function literalExportForRendering(markdown) {
+    let result = "", backslashes = 0;
+    for (const char of markdown) {
+      if ("&<>".includes(char) && backslashes % 2 === 0) result += "\\";
+      result += char;
+      backslashes = char === "\\" ? backslashes + 1 : 0;
+    }
+    return result;
+  }
+
+  function canonicalHtmlText(html) {
+    const document = new DOMParser().parseFromString(html, "text/html");
+    if (document.querySelector("script,style,img,iframe,video,audio,object")) throw new Error("The managed text contains unexpected non-text content.");
+    const parts = [];
+    const visit = node => {
+      if (node.nodeType === 3) { parts.push(node.nodeValue); return; }
+      for (const child of node.childNodes) visit(child);
+      if (/^(BR|P|DIV|H[1-6]|LI|BLOCKQUOTE|PRE|TR)$/.test(node.nodeName)) parts.push("\n");
+    };
+    visit(document.body);
+    return canonicalPlainText(parts.join(""));
+  }
+
+  async function fullTextParts(c, fulltexts) {
+    const result = [];
+    for (const text of fulltexts.filter(text => text.status === "available")) {
+      const { contentVersion, ...contentState } = text;
+      const digest = await hashText(JSON.stringify([identity(c, { key: text.key }), contentState]));
+      const chunks = [];
+      for (let start = 0; start < text.content.length;) {
+        let end = Math.min(start + 30000, text.content.length);
+        if (end < text.content.length) {
+          const paragraph = text.content.lastIndexOf("\n\n", end - 1);
+          if (paragraph > start + 24000) end = paragraph + 2;
+          if (/[\uD800-\uDBFF]/.test(text.content[end - 1]) && /[\uDC00-\uDFFF]/.test(text.content[end])) end--;
+        }
+        chunks.push(text.content.slice(start, end)); start = end;
+      }
+      if (!chunks.length) chunks.push("");
+      for (const [index, chunk] of chunks.entries()) {
+        const id = `${identity(c, { key: text.key })}/${digest}/${index + 1}`;
+        const startMarker = "Zotero text part: " + id;
+        const endMarker = "End of Zotero text part: " + id;
+        const markdown = [`# Indexed text: ${escapeMarkdown(text.title)}`, "", textCoverage(text), "",
+          `[View source in Zotero](${itemURL(c, { key: text.key })})`, "", `Part ${index + 1} of ${chunks.length}`, "",
+          startMarker, "", escapePlainText(chunk), "", endMarker, ""].join("\n");
+        if (markdown.length > 95000) throw new Error("A text part exceeds the note insertion limit.");
+        result.push({ attachmentKey: text.key, index: index + 1, count: chunks.length, id, chunk,
+          title: `[Zotero text ${index + 1}/${chunks.length}] ${text.title}`.slice(0, 240),
+          tag: `zotero-text/${c.libraryType}/${c.libraryId}/${text.key.toLowerCase()}/${digest.slice(0, 32)}/${index + 1}`,
+          startMarker, endMarker, markdown });
+      }
+    }
+    return result;
+  }
+
+  function managedTextPart(body, part) {
+    const lines = body.replace(/\r\n?/g, "\n").split("\n");
+    const starts = lines.map((line, i) => line === part.startMarker ? i : -1).filter(i => i >= 0);
+    const ends = lines.map((line, i) => line === part.endMarker ? i : -1).filter(i => i >= 0);
+    if (starts.length !== 1 || ends.length !== 1 || starts[0] >= ends[0]) throw new Error("The managed text part is incomplete or ambiguous. Review its note before syncing again.");
+    return lines.slice(starts[0] + 1, ends[0]).join("\n");
+  }
+
+  function render(c, item, children, annotations, copies, digest, fulltexts = [], textLinks = []) {
     const d = item.data || {}, source = itemURL(c, item);
     const authors = (d.creators || []).map(a => a.name || [a.firstName, a.lastName].filter(Boolean).join(" ")).join(", ");
     const lines = ["## Zotero reference", "", `**${escapeMarkdown(d.title || "Untitled reference")}**`, "",
@@ -181,6 +276,16 @@ export const ZoteroCore = (() => {
         lines.push(`- [${label}](${link})${copies[key] ? " (copied to Amplenote)" : " (opens source)"}`);
       }
       lines.push("");
+    }
+    if (fulltexts.length) {
+      lines.push("### Indexed article text", "");
+      for (const text of fulltexts) {
+        lines.push(`**${escapeMarkdown(text.title)}**`, "", textCoverage(text), "");
+        for (const part of textLinks.filter(link => link.attachmentKey === text.key)) {
+          lines.push(`- [Read text - part ${part.index} of ${part.count}](${part.url})`);
+        }
+        lines.push("");
+      }
     }
     if (annotations.length) {
       lines.push("### PDF annotations", "");
@@ -209,7 +314,8 @@ export const ZoteroCore = (() => {
       this.libraryVersion = null;
     }
     async request(path, query = {}, binary = false, expectedFileChecksum = null) {
-      if (!/^(items|collections)(\/[A-Z0-9]{8})?(\/(children|file|items|top))?(\/top)?$/.test(path)) {
+      const itemFullText = /^items\/[A-Z0-9]{8}\/fulltext$/.test(path);
+      if (!itemFullText && path !== "fulltext" && !/^(items|collections)(\/[A-Z0-9]{8})?(\/(children|file|items|top))?(\/top)?$/.test(path)) {
         throw new Error("Unsupported Zotero resource path.");
       }
       if (Date.now() < this.backoffUntil) throw new Error("Zotero requested a pause. Run sync again after the backoff interval.");
@@ -223,9 +329,15 @@ export const ZoteroCore = (() => {
         const response = await this.fetch(url.href, { method: "GET", headers, signal: controller.signal, credentials: "omit" });
         const backoff = Number(response.headers.get("Backoff") || response.headers.get("Retry-After") || 0);
         if (Number.isFinite(backoff) && backoff > 0) this.backoffUntil = Date.now() + backoff * 1000;
+        if (itemFullText && response.status === 404) { await response.body?.cancel(); return null; }
         if (!response.ok) throw new Error(`Zotero request failed (HTTP ${response.status}). No automatic retry was made.`);
         if (binary) return await this.readFile(response, expectedFileChecksum);
         const version = response.headers.get("Last-Modified-Version");
+        // This endpoint reports the text index's version, not the library version.
+        if (itemFullText) {
+          const bytes = await this.readBytes(response, this.config.maxFullTextBytes, "Full-text response exceeds configured size limit.");
+          return { data: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)), contentVersion: version };
+        }
         if (version && this.libraryVersion && version !== this.libraryVersion) {
           throw new Error("The Zotero library changed during sync. Run sync again for a consistent snapshot.");
         }
@@ -268,7 +380,40 @@ export const ZoteroCore = (() => {
         const nested = await this.list(`items/${itemKey(attachment)}/children`, { include: "data", sort: "dateAdded", direction: "asc" });
         annotations.push(...nested.filter(x => x.data?.itemType === "annotation"));
       }
-      return { children, annotations };
+      const fulltexts = [];
+      if (this.config.importFullText) {
+        for (const attachment of children.filter(x => x.data?.itemType === "attachment" &&
+          /^(application\/(pdf|xhtml\+xml)|text\/[^;]+)$/i.test(x.data?.contentType || ""))) {
+          fulltexts.push(await this.fullText(attachment));
+        }
+        if (fulltexts.length) await this.verifyTextSnapshot();
+      }
+      return { children, annotations, fulltexts };
+    }
+
+    async fullText(attachment) {
+      const key = itemKey(attachment), title = String(attachment.data?.title || attachment.data?.filename || key);
+      const response = await this.request(`items/${key}/fulltext`);
+      if (response === null) return { key, title, status: "unavailable" };
+      const { data, contentVersion } = response;
+      if (!data || typeof data.content !== "string") throw new Error("Zotero returned invalid indexed text.");
+      if (contentVersion !== null && !/^\d+$/.test(contentVersion)) throw new Error("Zotero returned an invalid text-index version.");
+      const text = { key, title, status: "available", contentVersion, content: data.content.replace(/\r\n?/g, "\n") };
+      for (const unit of ["Pages", "Chars"]) {
+        const a = "indexed" + unit, b = "total" + unit;
+        if (data[a] !== undefined || data[b] !== undefined) {
+          if (![data[a], data[b]].every(n => Number.isSafeInteger(n) && n >= 0) || data[a] > data[b]) throw new Error("Zotero returned invalid text-index coverage.");
+          text[a] = data[a]; text[b] = data[b];
+        }
+      }
+      return text;
+    }
+
+    async verifyTextSnapshot() {
+      if (!this.libraryVersion || !/^\d+$/.test(this.libraryVersion)) throw new Error("Zotero did not expose a library version for text snapshot verification.");
+      const changed = await this.request("fulltext", { since: this.libraryVersion });
+      if (!changed || typeof changed !== "object" || Array.isArray(changed)) throw new Error("Zotero returned invalid text-index changes.");
+      if (Object.keys(changed).length) throw new Error("Indexed text changed during sync. Run sync again for a consistent snapshot.");
     }
     async downloadAttachment(attachment) {
       const checksum = attachment.data?.md5;
@@ -277,9 +422,9 @@ export const ZoteroCore = (() => {
       }
       return this.request(`items/${itemKey(attachment)}/file`, {}, true, checksum.toLowerCase());
     }
-    async readFile(response, expectedFileChecksum = null) {
-      const max = this.config.maxAttachmentBytes, length = Number(response.headers.get("Content-Length") || 0);
-      if (length > max) { await response.body?.cancel(); throw new Error("Attachment exceeds configured size limit."); }
+    async readBytes(response, max, errorMessage) {
+      const length = Number(response.headers.get("Content-Length") || 0);
+      if (length > max) { await response.body?.cancel(); throw new Error(errorMessage); }
       const chunks = []; let size = 0;
       if (response.body?.getReader) {
         const reader = response.body.getReader();
@@ -288,17 +433,21 @@ export const ZoteroCore = (() => {
             const { value, done } = await reader.read();
             if (done) break;
             size += value.byteLength;
-            if (size > max) { await reader.cancel(); throw new Error("Attachment exceeds configured size limit."); }
+            if (size > max) { await reader.cancel(); throw new Error(errorMessage); }
             chunks.push(value);
           }
         } finally { reader.releaseLock(); }
       } else {
         const bytes = new Uint8Array(await response.arrayBuffer());
-        if (bytes.length > max) throw new Error("Attachment exceeds configured size limit.");
+        if (bytes.length > max) throw new Error(errorMessage);
         chunks.push(bytes); size = bytes.length;
       }
       const bytes = new Uint8Array(size); let offset = 0;
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+      return bytes;
+    }
+    async readFile(response, expectedFileChecksum = null) {
+      const bytes = await this.readBytes(response, this.config.maxAttachmentBytes, "Attachment exceeds configured size limit.");
       if (expectedFileChecksum !== null && fileChecksum(bytes) !== expectedFileChecksum) {
         throw new Error("The PDF file version no longer matches its Zotero metadata checksum. Run sync again after Zotero finishes syncing its file.");
       }
@@ -311,5 +460,5 @@ export const ZoteroCore = (() => {
   }
 
   return { config, Client, fileChecksum, itemKey, identity, identityTag, itemURL, escapeMarkdown, htmlToMarkdown,
-    safeURL, tagNames, selected, revision, render, MARKER };
+    safeURL, tagNames, selected, revision, render, fullTextParts, managedTextPart, literalExportForRendering, canonicalHtmlText, canonicalPlainText, textCoverage, MARKER };
 })();

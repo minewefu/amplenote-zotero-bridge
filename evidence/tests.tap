@@ -2,459 +2,573 @@ TAP version 13
 # Subtest: automatic interval is bounded and does not change rendered revision identity
 ok 1 - automatic interval is bounded and does not change rendered revision identity
   ---
-  duration_ms: 3.3738
+  duration_ms: 4.987
   type: 'test'
   ...
 # Subtest: new client and navigation never enable automatic imports implicitly
 ok 2 - new client and navigation never enable automatic imports implicitly
   ---
-  duration_ms: 0.3018
+  duration_ms: 0.4887
   type: 'test'
   ...
 # Subtest: cancelled enable confirmation performs no source requests or writes
 ok 3 - cancelled enable confirmation performs no source requests or writes
   ---
-  duration_ms: 0.2456
+  duration_ms: 0.3643
   type: 'test'
   ...
 # Subtest: automatic checks import child changes, preserve manual text, and leave repeats unchanged
 ok 4 - automatic checks import child changes, preserve manual text, and leave repeats unchanged
   ---
-  duration_ms: 14.4877
+  duration_ms: 8.4221
   type: 'test'
   ...
 # Subtest: an empty automatic selection succeeds quietly and schedules another check
 ok 5 - an empty automatic selection succeeds quietly and schedules another check
   ---
-  duration_ms: 0.3616
+  duration_ms: 0.456
   type: 'test'
   ...
 # Subtest: repeated start and frequent navigation do not add timers or postpone the deadline
 ok 6 - repeated start and frequent navigation do not add timers or postpone the deadline
   ---
-  duration_ms: 1.2338
+  duration_ms: 1.1922
   type: 'test'
   ...
 # Subtest: navigation after throttling catches up once instead of replaying missed intervals
 ok 7 - navigation after throttling catches up once instead of replaying missed intervals
   ---
-  duration_ms: 1.2592
+  duration_ms: 1.7435
   type: 'test'
   ...
 # Subtest: stopping invalidates even a callback already queued by the runtime
 ok 8 - stopping invalidates even a callback already queued by the runtime
   ---
-  duration_ms: 0.1799
+  duration_ms: 0.3191
   type: 'test'
   ...
 # Subtest: stop during metadata reads prevents every note mutation
 ok 9 - stop during metadata reads prevents every note mutation
   ---
-  duration_ms: 0.6944
+  duration_ms: 1.1729
   type: 'test'
   ...
 # Subtest: stop during a file download prevents note creation and upload
 ok 10 - stop during a file download prevents note creation and upload
   ---
-  duration_ms: 1.854
+  duration_ms: 3.0774
   type: 'test'
   ...
 # Subtest: stop during a write completes the current reference and leaves subsequent references untouched
 ok 11 - stop during a write completes the current reference and leaves subsequent references untouched
   ---
-  duration_ms: 0.9261
+  duration_ms: 1.3111
+  type: 'test'
+  ...
+# Subtest: stop during an indexed-text part preserves it and resumes without duplicate parts
+ok 12 - stop during an indexed-text part preserves it and resumes without duplicate parts
+  ---
+  duration_ms: 35.7906
   type: 'test'
   ...
 # Subtest: opening configuration disarms automatic sync even when editing is cancelled
-ok 12 - opening configuration disarms automatic sync even when editing is cancelled
+ok 13 - opening configuration disarms automatic sync even when editing is cancelled
   ---
-  duration_ms: 0.437
+  duration_ms: 0.6811
   type: 'test'
   ...
 # Subtest: settings changed through the host pause before source requests
-ok 13 - settings changed through the host pause before source requests
+ok 14 - settings changed through the host pause before source requests
   ---
-  duration_ms: 0.1256
+  duration_ms: 0.1418
   type: 'test'
   ...
 # Subtest: navigation compares refreshed settings without assuming app.settings updates synchronously
-ok 14 - navigation compares refreshed settings without assuming app.settings updates synchronously
+ok 15 - navigation compares refreshed settings without assuming app.settings updates synchronously
   ---
-  duration_ms: 0.0801
+  duration_ms: 0.1064
   type: 'test'
   ...
 # Subtest: timer polls do not reuse context-only methods after the originating action ends
-ok 15 - timer polls do not reuse context-only methods after the originating action ends
+ok 16 - timer polls do not reuse context-only methods after the originating action ends
   ---
-  duration_ms: 0.9197
+  duration_ms: 1.0143
   type: 'test'
   ...
 # Subtest: settings changed during a pending metadata request prevent writes
-ok 16 - settings changed during a pending metadata request prevent writes
+ok 17 - settings changed during a pending metadata request prevent writes
   ---
-  duration_ms: 0.6419
+  duration_ms: 0.7531
   type: 'test'
   ...
 # Subtest: automatic snapshot drift pauses before writing and does not retry on navigation
-ok 17 - automatic snapshot drift pauses before writing and does not retry on navigation
+ok 18 - automatic snapshot drift pauses before writing and does not retry on navigation
   ---
-  duration_ms: 0.421
+  duration_ms: 0.4968
   type: 'test'
   ...
 # Subtest: rate limiting pauses the driver after one request with no automatic retry
-ok 18 - rate limiting pauses the driver after one request with no automatic retry
+ok 19 - rate limiting pauses the driver after one request with no automatic retry
   ---
-  duration_ms: 0.2239
+  duration_ms: 0.2804
   type: 'test'
   ...
 # Subtest: automatic errors redact the API key from alerts and returned status
-ok 19 - automatic errors redact the API key from alerts and returned status
+ok 20 - automatic errors redact the API key from alerts and returned status
   ---
-  duration_ms: 0.2179
+  duration_ms: 0.3215
   type: 'test'
   ...
 # Subtest: a failed host alert cannot leave a retrying timer or locked plugin
-ok 20 - a failed host alert cannot leave a retrying timer or locked plugin
+ok 21 - a failed host alert cannot leave a retrying timer or locked plugin
   ---
-  duration_ms: 0.1931
+  duration_ms: 0.3001
   type: 'test'
   ...
 # Subtest: partial automatic failure keeps accurate counts and requires an explicit restart
-ok 21 - partial automatic failure keeps accurate counts and requires an explicit restart
+ok 22 - partial automatic failure keeps accurate counts and requires an explicit restart
   ---
-  duration_ms: 2.1922
+  duration_ms: 2.5335
   type: 'test'
   ...
 # Subtest: a due automatic check defers quietly while a manual action owns the lock
-ok 22 - a due automatic check defers quietly while a manual action owns the lock
+ok 23 - a due automatic check defers quietly while a manual action owns the lock
   ---
-  duration_ms: 0.9618
+  duration_ms: 0.8108
   type: 'test'
   ...
 # Subtest: stop during the enable prompt invalidates a late affirmative response
-ok 23 - stop during the enable prompt invalidates a late affirmative response
+ok 24 - stop during the enable prompt invalidates a late affirmative response
   ---
-  duration_ms: 0.1694
+  duration_ms: 0.2126
   type: 'test'
   ...
 # Subtest: configuration changes during enable confirmation cannot widen the accepted scope
-ok 24 - configuration changes during enable confirmation cannot widen the accepted scope
+ok 25 - configuration changes during enable confirmation cannot widen the accepted scope
   ---
-  duration_ms: 0.0968
+  duration_ms: 0.171
   type: 'test'
   ...
 # Subtest: the generated bundle exposes navigation and executes the automatic import path
-ok 25 - the generated bundle exposes navigation and executes the automatic import path
+ok 26 - the generated bundle exposes navigation and executes the automatic import path
   ---
-  duration_ms: 4.1358
+  duration_ms: 6.8694
   type: 'test'
   ...
 # Subtest: file checksum matches RFC 1321 vectors and an independent implementation
-ok 26 - file checksum matches RFC 1321 vectors and an independent implementation
+ok 27 - file checksum matches RFC 1321 vectors and an independent implementation
   ---
-  duration_ms: 56.0266
+  duration_ms: 75.0509
   type: 'test'
   ...
 # Subtest: PDF download checks bytes even when ETag is unavailable
-ok 27 - PDF download checks bytes even when ETag is unavailable
+ok 28 - PDF download checks bytes even when ETag is unavailable
   ---
-  duration_ms: 12.7665
+  duration_ms: 4.7019
   type: 'test'
   ...
 # Subtest: missing or malformed cloud-file checksum stops before download
-ok 28 - missing or malformed cloud-file checksum stops before download
+ok 29 - missing or malformed cloud-file checksum stops before download
   ---
-  duration_ms: 0.388
+  duration_ms: 0.3091
   type: 'test'
   ...
 # Subtest: fetch uses the browser global receiver rather than the Client instance
-ok 29 - fetch uses the browser global receiver rather than the Client instance
+ok 30 - fetch uses the browser global receiver rather than the Client instance
   ---
-  duration_ms: 0.9106
+  duration_ms: 0.9676
   type: 'test'
   ...
 # Subtest: configuration rejects invalid identifiers and limits
-ok 30 - configuration rejects invalid identifiers and limits
+ok 31 - configuration rejects invalid identifiers and limits
   ---
-  duration_ms: 0.1988
+  duration_ms: 0.2923
   type: 'test'
   ...
 # Subtest: selection combines collection, tag and type filters; excludes child objects
-ok 31 - selection combines collection, tag and type filters; excludes child objects
+ok 32 - selection combines collection, tag and type filters; excludes child objects
   ---
-  duration_ms: 0.1306
+  duration_ms: 0.2061
   type: 'test'
   ...
 # Subtest: tag mapping retains source identity independently of destination tag
-ok 32 - tag mapping retains source identity independently of destination tag
+ok 33 - tag mapping retains source identity independently of destination tag
   ---
-  duration_ms: 0.4894
+  duration_ms: 0.8193
   type: 'test'
   ...
 # Subtest: HTML conversion preserves basic formatting and treats markup-like text literally
-ok 33 - HTML conversion preserves basic formatting and treats markup-like text literally
+ok 34 - HTML conversion preserves basic formatting and treats markup-like text literally
   ---
-  duration_ms: 0.4727
+  duration_ms: 0.5972
   type: 'test'
   ...
 # Subtest: render includes metadata, notes, bibliography, attachment links and text annotations
-ok 34 - render includes metadata, notes, bibliography, attachment links and text annotations
+ok 35 - render includes metadata, notes, bibliography, attachment links and text annotations
   ---
-  duration_ms: 8.2782
+  duration_ms: 12.2636
   type: 'test'
   ...
 # Subtest: revision changes when a child changes even if parent version does not
-ok 35 - revision changes when a child changes even if parent version does not
+ok 36 - revision changes when a child changes even if parent version does not
   ---
-  duration_ms: 0.739
+  duration_ms: 0.899
   type: 'test'
   ...
 # Subtest: pagination retrieves 101 items with documented sort and no key in URL
-ok 36 - pagination retrieves 101 items with documented sort and no key in URL
+ok 37 - pagination retrieves 101 items with documented sort and no key in URL
   ---
-  duration_ms: 0.8195
+  duration_ms: 1.3669
   type: 'test'
   ...
 # Subtest: overlapping selected collections import each reference once
-ok 37 - overlapping selected collections import each reference once
+ok 38 - overlapping selected collections import each reference once
   ---
-  duration_ms: 0.3974
+  duration_ms: 0.579
   type: 'test'
   ...
 # Subtest: maxItems overflow fails instead of returning a falsely complete selection
-ok 38 - maxItems overflow fails instead of returning a falsely complete selection
+ok 39 - maxItems overflow fails instead of returning a falsely complete selection
   ---
-  duration_ms: 0.2495
+  duration_ms: 0.3718
   type: 'test'
   ...
 # Subtest: repeated pagination and changed library versions stop processing
-ok 39 - repeated pagination and changed library versions stop processing
+ok 40 - repeated pagination and changed library versions stop processing
   ---
-  duration_ms: 1.5005
+  duration_ms: 2.3314
   type: 'test'
   ...
 # Subtest: rate limit pauses later calls and never retries automatically
-ok 40 - rate limit pauses later calls and never retries automatically
+ok 41 - rate limit pauses later calls and never retries automatically
   ---
-  duration_ms: 0.2407
+  duration_ms: 0.3196
   type: 'test'
   ...
 # Subtest: successful Backoff response is honored before the next request
-ok 41 - successful Backoff response is honored before the next request
+ok 42 - successful Backoff response is honored before the next request
   ---
-  duration_ms: 0.6366
+  duration_ms: 0.4223
   type: 'test'
   ...
 # Subtest: details retrieves nested PDF annotations
-ok 42 - details retrieves nested PDF annotations
+ok 43 - details retrieves nested PDF annotations
   ---
-  duration_ms: 0.349
+  duration_ms: 1.0816
   type: 'test'
   ...
 # Subtest: file reader handles base64 and rejects oversized declared and streamed bodies
-ok 43 - file reader handles base64 and rejects oversized declared and streamed bodies
+ok 44 - file reader handles base64 and rejects oversized declared and streamed bodies
   ---
-  duration_ms: 0.4551
+  duration_ms: 0.3874
   type: 'test'
   ...
 # Subtest: unexpected resource paths are rejected before any fetch
-ok 44 - unexpected resource paths are rejected before any fetch
+ok 45 - unexpected resource paths are rejected before any fetch
   ---
-  duration_ms: 0.0764
+  duration_ms: 0.1696
+  type: 'test'
+  ...
+# Subtest: item text versions do not replace or conflict with the library version
+ok 46 - item text versions do not replace or conflict with the library version
+  ---
+  duration_ms: 5.4845
+  type: 'test'
+  ...
+# Subtest: no synced index is distinct from an empty available index
+ok 47 - no synced index is distinct from an empty available index
+  ---
+  duration_ms: 16.6453
+  type: 'test'
+  ...
+# Subtest: authorization and rate errors do not masquerade as missing full text
+ok 48 - authorization and rate errors do not masquerade as missing full text
+  ---
+  duration_ms: 1.8644
+  type: 'test'
+  ...
+# Subtest: text snapshot changes abort before any note mutation
+ok 49 - text snapshot changes abort before any note mutation
+  ---
+  duration_ms: 1.4142
+  type: 'test'
+  ...
+# Subtest: text opt-out avoids index requests and linked text notes
+ok 50 - text opt-out avoids index requests and linked text notes
+  ---
+  duration_ms: 1.2178
+  type: 'test'
+  ...
+# Subtest: malformed text and incomplete coverage metadata stop the import
+ok 51 - malformed text and incomplete coverage metadata stop the import
+  ---
+  duration_ms: 1.7643
+  type: 'test'
+  ...
+# Subtest: partial page and character indexes retain all returned text and disclose coverage
+ok 52 - partial page and character indexes retain all returned text and disclose coverage
+  ---
+  duration_ms: 18.0506
+  type: 'test'
+  ...
+# Subtest: oversized and invalid UTF-8 text responses fail before any notes exist
+ok 53 - oversized and invalid UTF-8 text responses fail before any notes exist
+  ---
+  duration_ms: 1.2572
+  type: 'test'
+  ...
+# Subtest: long article import preserves every numbered paragraph below the native per-call limit
+ok 54 - long article import preserves every numbered paragraph below the native per-call limit
+  ---
+  duration_ms: 335.1625
+  type: 'test'
+  ...
+# Subtest: literal markup stays text and surrogate pairs survive part boundaries
+ok 55 - literal markup stays text and surrogate pairs survive part boundaries
+  ---
+  duration_ms: 22.3394
+  type: 'test'
+  ...
+# Subtest: full-text changes and reversions create parent revisions while reusing identical text
+ok 56 - full-text changes and reversions create parent revisions while reusing identical text
+  ---
+  duration_ms: 10.8149
+  type: 'test'
+  ...
+# Subtest: native unescaped HTML delimiters in literal-text exports do not drop source characters
+ok 57 - native unescaped HTML delimiters in literal-text exports do not drop source characters
+  ---
+  duration_ms: 8.5826
+  type: 'test'
+  ...
+# Subtest: metadata-only updates do not duplicate unchanged article text
+ok 58 - metadata-only updates do not duplicate unchanged article text
+  ---
+  duration_ms: 5.4617
+  type: 'test'
+  ...
+# Subtest: a parent edit observed while text parts are prepared aborts the parent update
+ok 59 - a parent edit observed while text parts are prepared aborts the parent update
+  ---
+  duration_ms: 7.2621
+  type: 'test'
+  ...
+# Subtest: edited or missing managed text is not overwritten or reported unchanged
+ok 60 - edited or missing managed text is not overwritten or reported unchanged
+  ---
+  duration_ms: 9.0644
+  type: 'test'
+  ...
+# Subtest: interrupted part writes resume without duplicating completed text notes
+ok 61 - interrupted part writes resume without duplicating completed text notes
+  ---
+  duration_ms: 12.7578
+  type: 'test'
+  ...
+# Subtest: empty host backslash export recovers a failed parent write without a duplicate
+ok 62 - empty host backslash export recovers a failed parent write without a duplicate
+  ---
+  duration_ms: 5.0155
+  type: 'test'
+  ...
+# Subtest: generated bundle executes the indexed-text import with real DOM parsing
+ok 63 - generated bundle executes the indexed-text import with real DOM parsing
+  ---
+  duration_ms: 9.3852
   type: 'test'
   ...
 # Subtest: first import creates one note; a repeat leaves content unchanged
-ok 45 - first import creates one note; a repeat leaves content unchanged
+ok 64 - first import creates one note; a repeat leaves content unchanged
   ---
-  duration_ms: 16.7279
+  duration_ms: 10.4921
   type: 'test'
   ...
 # Subtest: new revision preserves manual edits; reverting source still creates newest matching revision
-ok 46 - new revision preserves manual edits; reverting source still creates newest matching revision
+ok 65 - new revision preserves manual edits; reverting source still creates newest matching revision
   ---
-  duration_ms: 2.7474
+  duration_ms: 3.0031
   type: 'test'
   ...
 # Subtest: child-only revisions update an existing reference
-ok 47 - child-only revisions update an existing reference
+ok 66 - child-only revisions update an existing reference
   ---
-  duration_ms: 1.2839
+  duration_ms: 1.6676
   type: 'test'
   ...
 # Subtest: interrupted content write recovers the tagged empty note without duplication
-ok 48 - interrupted content write recovers the tagged empty note without duplication
+ok 67 - interrupted content write recovers the tagged empty note without duplication
   ---
-  duration_ms: 1.0415
+  duration_ms: 1.562
   type: 'test'
   ...
 # Subtest: host write without readback evidence is recorded as failed
-ok 49 - host write without readback evidence is recorded as failed
+ok 68 - host write without readback evidence is recorded as failed
   ---
-  duration_ms: 0.6456
+  duration_ms: 1.0265
   type: 'test'
   ...
 # Subtest: a historical revision does not verify a failed source-reversion write
-ok 50 - a historical revision does not verify a failed source-reversion write
+ok 69 - a historical revision does not verify a failed source-reversion write
   ---
-  duration_ms: 2.2623
+  duration_ms: 2.826
   type: 'test'
   ...
 # Subtest: a host that appends instead of prepending does not verify the current revision
-ok 51 - a host that appends instead of prepending does not verify the current revision
+ok 70 - a host that appends instead of prepending does not verify the current revision
   ---
-  duration_ms: 0.9038
+  duration_ms: 1.2893
   type: 'test'
   ...
 # Subtest: partial batch stops and counts remaining references as unattempted
-ok 52 - partial batch stops and counts remaining references as unattempted
+ok 71 - partial batch stops and counts remaining references as unattempted
   ---
-  duration_ms: 0.7257
+  duration_ms: 1.1026
   type: 'test'
   ...
 # Subtest: preview and cancelled bulk sync make no note changes
-ok 53 - preview and cancelled bulk sync make no note changes
+ok 72 - preview and cancelled bulk sync make no note changes
   ---
-  duration_ms: 0.4299
+  duration_ms: 0.5322
   type: 'test'
   ...
 # Subtest: changed library metadata aborts before any note writes
-ok 54 - changed library metadata aborts before any note writes
+ok 73 - changed library metadata aborts before any note writes
   ---
-  duration_ms: 0.428
+  duration_ms: 0.5177
   type: 'test'
   ...
 # Subtest: ambiguous or foreign record tags do not modify matching notes
-ok 55 - ambiguous or foreign record tags do not modify matching notes
+ok 74 - ambiguous or foreign record tags do not modify matching notes
   ---
-  duration_ms: 0.8906
+  duration_ms: 1.2039
   type: 'test'
   ...
 # Subtest: optional PDF copy uses data URL upload; repeat does not upload again
-ok 56 - optional PDF copy uses data URL upload; repeat does not upload again
+ok 75 - optional PDF copy uses data URL upload; repeat does not upload again
   ---
-  duration_ms: 2.6014
+  duration_ms: 3.9808
   type: 'test'
   ...
 # Subtest: a changed PDF is rejected before note creation or upload
-ok 57 - a changed PDF is rejected before note creation or upload
+ok 76 - a changed PDF is rejected before note creation or upload
   ---
-  duration_ms: 0.9211
+  duration_ms: 1.3498
   type: 'test'
   ...
 # Subtest: attachment size failure occurs before creating a note
-ok 58 - attachment size failure occurs before creating a note
+ok 77 - attachment size failure occurs before creating a note
   ---
-  duration_ms: 0.7324
+  duration_ms: 1.1825
   type: 'test'
   ...
 # Subtest: upload failure never records a completed content revision
-ok 59 - upload failure never records a completed content revision
+ok 78 - upload failure never records a completed content revision
   ---
-  duration_ms: 0.677
+  duration_ms: 0.9812
   type: 'test'
   ...
 # Subtest: citation picker uses scalar responses and inserts formatted output once
-ok 60 - citation picker uses scalar responses and inserts formatted output once
+ok 79 - citation picker uses scalar responses and inserts formatted output once
   ---
-  duration_ms: 0.4195
+  duration_ms: 0.5434
   type: 'test'
   ...
 # Subtest: bibliography preserves italics and handles unavailable insertion location
-ok 61 - bibliography preserves italics and handles unavailable insertion location
+ok 80 - bibliography preserves italics and handles unavailable insertion location
   ---
-  duration_ms: 0.3501
+  duration_ms: 0.4754
   type: 'test'
   ...
 # Subtest: cancelled reference picker leaves the original selection unchanged
-ok 62 - cancelled reference picker leaves the original selection unchanged
+ok 81 - cancelled reference picker leaves the original selection unchanged
   ---
-  duration_ms: 0.064
+  duration_ms: 0.0923
   type: 'test'
   ...
 # Subtest: single-reference search imports and reuses one tagged note
-ok 63 - single-reference search imports and reuses one tagged note
+ok 82 - single-reference search imports and reuses one tagged note
   ---
-  duration_ms: 6.7053
+  duration_ms: 8.1842
   type: 'test'
   ...
 # Subtest: cancelling the single-reference result chooser makes no note changes
-ok 64 - cancelling the single-reference result chooser makes no note changes
+ok 83 - cancelling the single-reference result chooser makes no note changes
   ---
-  duration_ms: 0.2383
+  duration_ms: 0.2625
   type: 'test'
   ...
 # Subtest: failed tagging on a repeat import is not counted as unchanged success
-ok 65 - failed tagging on a repeat import is not counted as unchanged success
+ok 84 - failed tagging on a repeat import is not counted as unchanged success
   ---
-  duration_ms: 0.7203
+  duration_ms: 1.0605
   type: 'test'
   ...
 # Subtest: configure accepts multiple inputs plus action index and rejects bad JSON
-ok 66 - configure accepts multiple inputs plus action index and rejects bad JSON
+ok 85 - configure accepts multiple inputs plus action index and rejects bad JSON
   ---
-  duration_ms: 0.3071
+  duration_ms: 0.3736
   type: 'test'
   ...
 # Subtest: configuration blocks other actions until settings are saved or cancelled
-ok 67 - configuration blocks other actions until settings are saved or cancelled
+ok 86 - configuration blocks other actions until settings are saved or cancelled
   ---
-  duration_ms: 0.2253
+  duration_ms: 0.2822
   type: 'test'
   ...
 # Subtest: a rejected configuration prompt releases the operation lock
-ok 68 - a rejected configuration prompt releases the operation lock
+ok 87 - a rejected configuration prompt releases the operation lock
   ---
-  duration_ms: 0.1168
+  duration_ms: 0.1265
   type: 'test'
   ...
 # Subtest: backoff persists across separate plugin actions
-ok 69 - backoff persists across separate plugin actions
+ok 88 - backoff persists across separate plugin actions
   ---
-  duration_ms: 0.2177
+  duration_ms: 0.2645
   type: 'test'
   ...
 # Subtest: host errors from another realm retain their message and redact credentials
-ok 70 - host errors from another realm retain their message and redact credentials
+ok 89 - host errors from another realm retain their message and redact credentials
   ---
-  duration_ms: 0.5173
+  duration_ms: 0.7245
   type: 'test'
   ...
 # Subtest: a concurrent action is refused and does not start another request
-ok 71 - a concurrent action is refused and does not start another request
+ok 90 - a concurrent action is refused and does not start another request
   ---
-  duration_ms: 0.2271
+  duration_ms: 0.268
   type: 'test'
   ...
 # Subtest: built literal plugin evaluates and delegates an actual fixture import
-ok 72 - built literal plugin evaluates and delegates an actual fixture import
+ok 91 - built literal plugin evaluates and delegates an actual fixture import
   ---
-  duration_ms: 5.0139
+  duration_ms: 5.8619
   type: 'test'
   ...
 # Subtest: generated plugin preserves the native fetch receiver in the browser realm
-ok 73 - generated plugin preserves the native fetch receiver in the browser realm
+ok 92 - generated plugin preserves the native fetch receiver in the browser realm
   ---
-  duration_ms: 2.7519
+  duration_ms: 2.2252
   type: 'test'
   ...
 # Subtest: generated browser bundle verifies a PDF before its native upload
-ok 74 - generated browser bundle verifies a PDF before its native upload
+ok 93 - generated browser bundle verifies a PDF before its native upload
   ---
-  duration_ms: 2.9439
+  duration_ms: 3.9912
   type: 'test'
   ...
 # Subtest: installation note contains only supported metadata keys and no repeated blank code lines
-ok 75 - installation note contains only supported metadata keys and no repeated blank code lines
+ok 94 - installation note contains only supported metadata keys and no repeated blank code lines
   ---
-  duration_ms: 1.306
+  duration_ms: 1.5578
   type: 'test'
   ...
-1..75
-# tests 75
+1..94
+# tests 94
 # suites 0
-# pass 75
+# pass 94
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 144.6075
+# duration_ms 6255.0368

@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-09-09T03:19:28.260Z",
+  "generatedAt": "2026-09-09T12:02:36.726Z",
   "nodeVersion": "v24.18.0",
-  "command": "node --test --test-reporter=tap test/core.test.mjs test/plugin.test.mjs test/auto-sync.test.mjs",
+  "command": "node --test --test-reporter=tap test/core.test.mjs test/plugin.test.mjs test/auto-sync.test.mjs test/fulltext.test.mjs",
   "exitCode": 0,
-  "tests": 75,
-  "passed": 75,
+  "tests": 94,
+  "passed": 94,
   "failed": 0,
   "skipped": 0,
   "cancelled": 0,
@@ -13,19 +13,19 @@
   "paymentVerified": false,
   "fileHashes": {
     "core.mjs": {
-      "sha256": "01e67c3ee3a5abafd5c3c672e8dfc66c901c3029b36a06c38b035e998efadbfb",
+      "sha256": "22231a23632e75990129468a115598c17875d995a830b27daf05113ec2d840b2",
       "matchesBuild": true
     },
     "plugin.mjs": {
-      "sha256": "ef1726e0fcf9556659b5a7e9a24cbc4a3ae8ee007287eae0ae7d8c51fd5e4c2e",
+      "sha256": "1a5032cef59addc705f15d52e2c6e37a1e134e43ad9abd3608f7c6136cd12ee4",
       "matchesBuild": true
     },
     "dist/plugin.js": {
-      "sha256": "8e724873db88ae20d5063c710d252c703240edddce964004b32ca5272f13bd86",
+      "sha256": "da5e15e38dc8702faa7cb714c8f19e6fe1c36f278cf5ca7c2e671677ad31edf5",
       "matchesBuild": true
     },
     "dist/PLUGIN_NOTE.md": {
-      "sha256": "dc52ad45ab7f6710843a2f4c51ce3ee7f379597b65653a8d48c927c18edef6bc",
+      "sha256": "73306cff2e3bb3d6ca8b29dbdd03813a061cc9f8b562af6fb9143a5655f2a0c1",
       "matchesBuild": true
     },
     "test/core.test.mjs": {
@@ -35,16 +35,19 @@
       "sha256": "6496bc22fe4ffb6a04d9b87f7cb673d9764e2d64184bafcf456d8fc8b276df40"
     },
     "test/auto-sync.test.mjs": {
-      "sha256": "f37e047d0b21afe91d4f0d0ca6e33ac91e3936afe5be7487ea004521bdf30356"
+      "sha256": "6964ec7e9e1ca27dc2aeb39d723c52d80c20a844f904556e71a89236e1c293b6"
+    },
+    "test/fulltext.test.mjs": {
+      "sha256": "9e1945c1e897b9fc0be64412cd96fb4bd6ceb0890a3f46b895af1b92a5a853e4"
     },
     "test/fixtures.mjs": {
-      "sha256": "924b73d0234b6d62e0c51907f5f1499fd9c44cccd7ecfcdfdd0e19bdbc73bab9"
+      "sha256": "5bf85f3e96d18e0245688cd799b96d5cbc68f0c36c56e7a136d29e7c09428faf"
     },
     "build.mjs": {
       "sha256": "8a5f9a0ad1a59c4fac59fd6260e9671f9115f27d61629c4c4209d61b450235d3"
     },
     "verify.mjs": {
-      "sha256": "d26b2eaaf7dd4dd9281060ada7e0acda07544a0249b11801a23581827a19ec95"
+      "sha256": "0210b312920d7b4f4740e56e466406df4b75a4333d20b601838c121ff400cb4a"
     }
   },
   "verified": true

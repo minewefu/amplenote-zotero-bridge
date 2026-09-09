@@ -1,5 +1,13 @@
 # Changes
 
+## 0.3.0 — September 9, 2026
+
+Added indexed HTML/PDF/text import through Zotero's documented full-text API. Content-index versions are kept separate from the library version, and missing/partial indexes are reported accurately. Long text is split into versioned linked notes under the host insertion limit; identical parts are reused, and changed managed text is preserved for review.
+
+Added parent-change detection before writing a prepared reference. Live checks exposed literal HTML delimiters left unescaped by the host's Markdown export; validation now protects those literal delimiters before re-rendering, without changing stored text.
+
+All 94 local tests pass. A public API check returned a 5,911-character HTML index. Original-fixture tests with real Amplenote APIs verified a 70,318-character import, updates, repeats, reversions and saved annotations within one client. Separate browser tabs returned different note snapshots, so cross-client safety is not claimed. Private/group integration, PDF copying, the remaining lifecycle cases, videos and bounty submission remain unfinished.
+
 ## 0.2.2 — September 9, 2026
 
 PDF copying now compares the downloaded bytes with Zotero's metadata checksum before creating a note or uploading a file. Missing cloud-file checksums and changed files stop with an actionable error. The check works without an exposed ETag header. A regression test reproduced the old importer accepting a mismatched version.

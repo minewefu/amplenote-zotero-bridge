@@ -1,44 +1,43 @@
 # Zotero Bridge for Amplenote
 
-Development candidate 0.2.2. **Not submitted or represented as bounty-complete.** The earlier 0.2.1 build passed public-library preview, single-reference import/repeat, manual-text preservation, cursor citation/bibliography insertion, and automatic start/repeat/navigation/stop inside Amplenote. Version 0.2.2 adds PDF file-version checks; its installation, exact source readback, configuration persistence and public reference search were exercised in the host. Browser PDF copying currently fails because Zotero's file server does not permit the plugin origin and Zotero is not on Amplenote's proxy allowlist. See `HOST_TEST_RESULTS.md` for the exact scope.
+Development candidate 0.3.0. Bounty acceptance and payment are unconfirmed; the directory listing and complete host-validation matrix remain unfinished.
 
-A separate native upload check found that the normal note toolbar can upload and display an original PDF, while `app.attachNoteMedia` returned `NetworkError` for the same data. The supported plugin-driven document-upload method remains unresolved; the fixture and reproduction are in `diagnostics/`.
+The plugin imports Zotero reference metadata, abstracts, child notes, annotations and available indexed article text. It searches references, inserts formatted citations and bibliography entries, and can sync a selected library or collection while the Amplenote client remains open. Zotero access is read-only.
 
-This plugin imports Zotero reference metadata, abstracts, child notes, and text annotations into Amplenote. It searches references and inserts formatted citations or bibliography entries at the current cursor. Zotero access is read-only. Changed imports are prepended as revisions so existing text and manual notes remain.
+## Indexed article text
 
-## Local verification
+Available HTML, PDF and text indexes are copied into linked Amplenote notes. Each part contains at most 30,000 source characters, keeping its escaped Markdown below Amplenote's 100,000-character insertion limit. Long documents are preserved across multiple parts; no truncated text is presented as a complete import.
 
-With Node.js 22 or newer, run these commands from this directory. No dependency installation is needed.
+The reference note shows Zotero's page or character coverage, including a partial-index notice when appropriate. A missing index is reported separately from an empty available index. Coverage describes what Zotero indexed, not a guarantee that its index contains every part of the original document.
 
-```text
+Identical text parts are reused across repeats and metadata updates. Text changes create versioned parts; reverting to earlier text reuses its existing parts. Add your reading notes outside the marked managed-text region. A changed managed region stops the import and is preserved for review. Completed parts can be reused after an interrupted import, and the parent revision is added only after all its parts are verified.
+
+Reference sync results count references, not the additional text notes. Formatting and whitespace follow Amplenote's Markdown renderer; verification checks the complete normalized text, including literal punctuation.
+
+## Develop and test
+
+Use a Node version supported by `package.json` (Node 24.15+ in the 24.x line is supported).
+
+```sh
+npm ci --ignore-scripts
 node verify.mjs
 ```
 
-The verified 0.2.2 build passes 75/75 tests. `evidence/verification.json` records the source/bundle hashes, runtime, test counts, and scope. Tests use synthetic Zotero responses, an in-memory Amplenote adapter, and a deterministic clock, including execution of the generated plugin object. The 25 automatic-sync cases cover opt-in, child updates, cancellation, overlap, settings changes, partial failures, and redacted status. PDF-version tests cover changed files before note mutation, absent checksums, binary boundaries and generated-bundle uploads. The earlier 0.1.1 regression transcript and source hash remain under `evidence/regression-before.*`.
+All 94 local tests pass on Node 24.18.0. They cover source preservation, file-version checks, long indexed documents, partial/missing indexes, independent text/library versions, interruptions, retries, manual annotations and automatic-sync cancellation. The generated bundle is executed in the test harness. `marked` and `jsdom` are development dependencies; the distributed plugin does not load them.
 
-The earlier `evidence/live-smoke.json` proves one unauthenticated request to Zotero's documented public example, decoding citations/bibliography, and local rendering. It does not verify private authentication, file copying, browser CORS behavior, or Amplenote execution. Do not relabel this as an end-to-end pass.
+The public Zotero API was checked separately and returned a 5,911-character HTML index with its own content version, plus an unavailable PDF index. A live Amplenote diagnostic used original synthetic Zotero responses and real note APIs to verify a 70,318-character article, updates, repeat imports, reversions and saved editor annotations in one client. This is component coverage, not a claim of verified private/group-library integration. See `HOST_TEST_RESULTS.md`.
 
-## Install for host testing
+## Install for testing
 
-Use a dedicated test account or disposable notes. Import `dist/PLUGIN_NOTE.md` as an Amplenote note, retaining its settings table and first JavaScript code block. Alternatively, create a note and copy the rendered table plus `dist/plugin.js` into the first JavaScript code block. Then select the note under Settings > Plugins > Add a plugin, following the [official builder guide](https://www.amplenote.com/help/guide_to_developing_amplenote_plugins).
+Import `dist/PLUGIN_NOTE.md` through Amplenote's Markdown importer and select its note in Account Settings > Plugins. Alternatively, copy the metadata table and exact `dist/plugin.js` object into a plugin note. Verify the code after importing: earlier host imports changed whitespace in code blocks. Stop automatic sync before replacing the code.
 
-Open Quick Open and choose **Zotero Bridge: Configure**. Supply a personal/group library type and numeric library ID. Public libraries can use an empty API key. Enter a dedicated read-only key for a private library in the configuration dialog; never paste it into the plugin note, repository, recording, or submission email.
+Open Quick Open and choose **Zotero Bridge: Configure**. Enter a personal/group library type and numeric library ID. A public library can use a blank API key. Keep a dedicated private-library read-only key in the configuration dialog, not the source note or repository.
 
-The Markdown importer was observed adding blank-line artifacts and a stray backslash to the 0.2.0 code. Check the code block after import; if necessary, replace it with the exact contents of `dist/plugin.js`. Version 0.2.1 removes the extra metadata header and repeated blank lines at bundle joins. Installation through the note editor has been verified; a fresh 0.2.1 file import still requires its own check.
-
-Run **Preview selection** before **Sync selected references**. To test one item, use **Search and import one reference**. With a cursor in an editable note, invoke **Insert formatted citation** or **Insert bibliography entry** through the text insertion plugin menu.
-
-## Automatic synchronization
-
-After checking the selection, choose **Start automatic sync in this client** and confirm. The driver imports immediately, then schedules the next check after each completed run. `autoSyncMinutes` defaults to 15 and accepts whole numbers from 1 to 1440. This option sets the interval; saving it alone never enables automatic imports.
-
-Use **Show automatic sync status** to see the last result and next check, or **Stop automatic sync** to stop. A stop before note mutation prevents that import. A reference already being written finishes; later references are left untouched. Success is quiet. Errors or detected settings changes pause the driver and require an explicit restart. Timer polls inspect synchronized `app.settings`; a navigation callback can refresh settings through its live context. Cross-device changes are subject to the host's settings synchronization delay. Opening Configure also stops it, even if the dialog is cancelled. A manual action postpones an overlapping automatic check by 30 seconds.
-
-Run automatic sync on only one client. Enabled state is held in memory and is not restored by a fresh plugin instance. There is no closed-app service. Browser throttling can delay checks; navigation schedules one overdue check. Repeated timer-driven imports, navigation, stop, and fresh state after reload have been checked in Chrome. Reload while enabled, disable behavior, mobile/background operation, and the full lifecycle matrix still require host verification. Stop automatic sync before editing or replacing the plugin code.
+Use **Preview selection**, then **Sync selected references** or **Search and import one reference**. Citation and bibliography insertion are available from the text-insertion plugin menu with an active note cursor.
 
 ## Configuration
 
-The four settings are `Library type`, `Library ID`, `API key`, and `Options JSON`. Example options using synthetic collection keys and source tags:
+The four settings are `Library type`, `Library ID`, `API key` and `Options JSON`. An example using synthetic filter values:
 
 ```json
 {
@@ -49,25 +48,33 @@ The four settings are `Library type`, `Library ID`, `API key`, and `Options JSON
   "destinationTag": "research/zotero",
   "style": "apa",
   "locale": "en-US",
+  "importFullText": true,
   "copyAttachments": false,
   "autoSyncMinutes": 15,
   "maxItems": 1000,
-  "maxAttachmentBytes": 10485760
+  "maxAttachmentBytes": 10485760,
+  "maxFullTextBytes": 10485760
 }
 ```
 
-Replace the example collection key with your own or use an empty list. Each filter list is an OR within that list; nonempty collection, tag, and item-type filters combine with AND. Filters use exact source values. Unmapped source tags are added beneath the destination tag. Existing tags are retained when mappings change. The item limit also bounds intermediate fetched lists, so a large library can require a narrower collection before tag filtering.
+Each filter list is OR within that list; nonempty collection, tag and item-type filters combine with AND. Replace the sample collection key or use an empty list. Unmapped source tags are added beneath the destination tag, and existing tags remain when mappings change.
 
-`copyAttachments` enables copying uploaded Zotero PDF attachments to Amplenote. It defaults off. Linked local files are not copied; other attachments remain links to their source. Each copied file must match the MD5 version checksum in its Zotero metadata. Missing or mismatched checksums stop the import before a note is created or the file is uploaded; finish Zotero file synchronization and run sync again. This checksum is for version comparison, not authentication. Per-file limits default to 10 MiB and cannot exceed 50 MiB. The selected-item limit cannot exceed 10,000. Imports over 95,000 characters fail rather than silently truncate. These limits do not establish a maximum total account storage requirement.
+`importFullText` defaults to true. Set it to false to skip index requests and new text copies; this does not delete existing copies. `maxFullTextBytes` bounds each JSON text response, defaults to 10 MiB, and can be set up to 50 MiB. Exceeding a limit stops the import rather than truncating it. The reference metadata/index itself must fit a 95,000-character insertion; large article bodies use the linked parts.
 
-## Current limitations
+## Automatic sync and preservation
 
-Manual sync and opt-in periodic sync have passed selected public-library host checks. Private-library, live source-update, PDF-copy, and remaining lifecycle scenarios are still unverified. Only cloud-synced Zotero data is available. PDF image/ink annotations point to the source rather than exporting crops. Nunjucks templates, Better BibTeX integration, arbitrary export formats, local-only files, and whole-article HTML capture are not implemented. These differences matter because the bounty explicitly requests parity with an Obsidian integration; see `SUBMISSION.md`.
+Automatic sync is off in a fresh plugin instance. **Start automatic sync in this client** imports immediately after confirmation and schedules the next check after the current run finishes. The interval accepts 1-1440 minutes. Reloading or closing the client stops it; this is not a closed-app service. Errors pause the driver until explicit restart.
 
-Only one client should sync a library at a time. Cross-device transactions are unavailable in this implementation. A failed operation may leave an empty tagged note or an uploaded attachment; re-running can recover the note but does not guarantee attachment deduplication after partial failure. The latest revision marker is checked after writes, but that check is not proof that every rendered character survived host conversion.
+**Stop automatic sync** prevents the next read/write unit. An in-flight text part finishes, then later parts and the parent update are left for a future run. Once the parent begins its own mutation, that reference finishes. Completed text parts are reusable after a stop or failure. Opening Configure stops the automatic driver.
 
-## Project layout
+Use the same client for editing and importing. Live checks found that separate browser tabs could return different snapshots of a note. An observed parent edit while an import is being prepared now stops its content update, but the documented API offers no atomic compare-and-swap operation. Concurrent changes from other clients cannot be guaranteed safe. Prior imported revisions and annotations outside managed regions are retained in the verified single-client workflow.
 
-`core.mjs` handles Zotero requests, filters, identity, revisions, and rendering. `plugin.mjs` implements Amplenote actions. `build.mjs` emits the installable object and note. `test/` covers read/write behavior and failure recovery. `HOST_TEST_PLAN.md` contains the remaining manual cases. `VIDEO_SCRIPTS.md` prepares the two walkthroughs; recordings have not been created.
+## Remaining limitations
 
-MIT licensed; see `LICENSE`. No upstream Obsidian source was copied into this continuation.
+Browser PDF copying is unresolved. Zotero's file server does not permit the plugin origin, and Zotero is absent from Amplenote's documented CORS-proxy allowlist. Separately, `app.attachNoteMedia` returned `NetworkError` for an original PDF, although normal toolbar upload, native viewing and byte-identical API readback succeeded. The [diagnostic](diagnostics/README.md) is available, and both questions were sent to support. Keep `copyAttachments` false until a supported route is available.
+
+Only synced indexed text is available through the web API. Local-only files, PDF image/ink crops, Better BibTeX workflows, Nunjucks templates and arbitrary export formats remain outside this candidate. The bounty brief qualifies feature parity as “or as close as possible”; sponsor acceptance of this scope is still required.
+
+Private/group access, owner-controlled live Zotero mutations, full mobile/background/disable lifecycle coverage, the two demonstration recordings and directory publication remain unfinished. Local tests and component probes are not bounty acceptance or received earnings.
+
+Original code is MIT-licensed; see `LICENSE`.

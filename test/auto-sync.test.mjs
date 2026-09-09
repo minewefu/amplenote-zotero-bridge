@@ -195,6 +195,27 @@ test("stop during a write completes the current reference and leaves subsequent 
   assert.equal(h.clock.pending.size, 0);
 });
 
+test("stop during an indexed-text part preserves it and resumes without duplicate parts", async () => {
+  const h = setup({}, { children: { ITEM0001: [pdf] }, fulltexts: { PDFD0001: { content: "A".repeat(65000), indexedPages: 3, totalPages: 3 } } });
+  const g = gate(), insert = h.app.insertNoteContent.bind(h.app);
+  h.app.insertNoteContent = async (...args) => { await g.block(); return insert(...args); };
+  await h.start(); const running = h.clock.tick(); await g.started;
+  await h.stop(); g.release(); await running;
+  const parents = () => [...h.app.notes.values()].filter(n => n.tags.some(t => t.startsWith("zotero-record/")));
+  assert.equal(parents().length, 0);
+  assert.equal(h.app.notes.size, 1);
+  assert.equal(h.status().lastRun.cancelled, true);
+  assert.equal(h.clock.pending.size, 0);
+  const firstBody = [...h.app.notes.values()][0].body;
+  h.app.insertNoteContent = insert;
+  await h.start(); await h.clock.tick();
+  assert.equal(h.status().lastRun.created, 1);
+  assert.equal(h.app.notes.size, 4);
+  assert.equal([...h.app.notes.values()][0].body, firstBody);
+  assert.equal(h.app.writes, 4);
+  await h.stop();
+});
+
 test("opening configuration disarms automatic sync even when editing is cancelled", async () => {
   const h = setup();
   await h.start(); h.app.promptAnswers = [null];

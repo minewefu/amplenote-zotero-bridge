@@ -1,14 +1,20 @@
 {
   "name": "amplenote-zotero-bridge",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Unsubmitted Amplenote Zotero bounty candidate",
   "scripts": {
-    "test": "node build.mjs && node --test test/core.test.mjs test/plugin.test.mjs test/auto-sync.test.mjs",
+    "test": "node build.mjs && node --test test/core.test.mjs test/plugin.test.mjs test/auto-sync.test.mjs test/fulltext.test.mjs",
     "build": "node build.mjs",
     "verify": "node verify.mjs",
     "live-smoke": "node live-smoke.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1",
+    "marked": "18.0.12"
+  }
 }

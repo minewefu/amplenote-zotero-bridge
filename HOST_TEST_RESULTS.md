@@ -1,5 +1,17 @@
 # Amplenote host test results
 
+## September 9 checkpoint: 0.3.0 indexed text
+
+The current client successfully read Zotero's public example: its HTML snapshot had 5,911 indexed characters at content version 3660, while the library version was 3663. The PDF index returned unavailable. No article text was retained in the public API report.
+
+A controlled diagnostic then supplied original synthetic Zotero responses to the actual importer and used real Amplenote APIs. The 70,318-character source created one reference and three complete text parts. A source update created three new versioned parts, an unchanged repeat created none, and a reversion reused the original three. The reference remained unique.
+
+The first live verification failed because `getNoteContent` left literal HTML delimiters unescaped, and `htmlFromContent` subsequently interpreted them as markup. The actual editor still contained the original literal text. A read-only comparison isolated this mismatch. The corrected literal-text validation passed without overwriting the preserved part.
+
+An editor annotation outside the managed text region survived. Parent-annotation checks initially differed between browser clients: the editing client returned the annotation, while another returned an older snapshot. This was not counted as a preservation pass. A subsequent test required the saved annotation to be visible through the API before each operation in the editing client; update, unchanged repeat and reversion all retained it. Cross-client safety remains unverified and is not promised.
+
+All 94 local tests pass, including a simulated concurrent parent edit that is detected before a prepared update is inserted. These local tests and original-fixture host checks do not prove private/group access or owner-controlled Zotero source mutation behavior.
+
 ## September 9 checkpoint: 0.2.2
 
 The 0.2.2 source was published at `351928fa21ff1aa4d2034a4ac9aed95f31791605`, copied into the existing plugin note, and copied back for comparison. All 40,697 normalized source characters matched. The note reported synchronized state. Automatic sync was off before replacement; it was not enabled during this test.

@@ -1,5 +1,9 @@
 // Entirely synthetic fixtures. This module never contacts Zotero or Amplenote.
 import { createHash } from "node:crypto";
+import { marked } from "marked";
+import { JSDOM } from "jsdom";
+export const TestDOMParser = new JSDOM("").window.DOMParser;
+globalThis.DOMParser ??= TestDOMParser;
 export function reference(key = "ITEM0001", overrides = {}) {
   return { key, version: 7, library: { type: "user", id: 123 },
     citation: "<span>(Example, 2026)</span>", bib: "<div>Example. <i>Sample research</i>. 2026.</div>",
@@ -14,8 +18,9 @@ export function jsonResponse(value, headers = {}, status = 200) {
   } });
 }
 
-export function service({ items = [reference()], children = {}, files = {}, intercept } = {}) {
+export function service({ items = [reference()], children = {}, files = {}, fulltexts = {}, fulltextVersions = {}, intercept } = {}) {
   const calls = [];
+  const state = { libraryVersion: "42" };
   const fetch = async (url, options) => {
     const u = new URL(url);
     if (u.origin !== "https://api.zotero.org") throw new Error("Fixture refused an unexpected origin.");
@@ -27,6 +32,11 @@ export function service({ items = [reference()], children = {}, files = {}, inte
     }
     const path = u.pathname.replace(/^\/(users|groups)\/[1-9][0-9]*\//, "");
     let rows;
+    if (path === "fulltext") return jsonResponse({}, { "Last-Modified-Version": state.libraryVersion });
+    if (/^items\/[A-Z0-9]{8}\/fulltext$/.test(path)) {
+      const key = path.split("/")[1], data = fulltexts[key];
+      return data ? jsonResponse(data, { "Last-Modified-Version": String(fulltextVersions[key] ?? 1) }) : jsonResponse({}, {}, 404);
+    }
     if (path === "items/top") rows = items;
     else if (/^collections\/[A-Z0-9]{8}\/items\/top$/.test(path)) {
       rows = items.filter(item => item.data.collections.includes(path.split("/")[1]));
@@ -47,9 +57,9 @@ export function service({ items = [reference()], children = {}, files = {}, inte
         return { ...item, data: { ...item.data, md5: createHash("md5").update(file).digest("hex") } };
       }
       return item;
-    }));
+    }), { "Last-Modified-Version": state.libraryVersion });
   };
-  return { fetch, calls, items, children, files };
+  return { fetch, calls, items, children, files, fulltexts, fulltextVersions, state };
 }
 
 export class FakeApp {
@@ -86,6 +96,8 @@ export class FakeApp {
     if (!this.notes.has(uuid)) throw new Error("Fixture note missing.");
     return this.notes.get(uuid).body;
   }
+  async getNoteURL({ uuid }) { return `https://www.amplenote.com/notes/${uuid}`; }
+  async htmlFromContent(markdown) { return marked.parse(markdown); }
   async addNoteTag({ uuid }, tag) {
     if (this.failTag) return false;
     const note = this.notes.get(uuid);
@@ -94,6 +106,7 @@ export class FakeApp {
     return true;
   }
   async insertNoteContent({ uuid }, content, { atEnd }) {
+    if (content.length > 100000) throw new Error("Native insertion limit exceeded.");
     if (this.failWrite) throw new Error("Fixture note is read-only.");
     if (this.ignoreWrite) return;
     const note = this.notes.get(uuid);

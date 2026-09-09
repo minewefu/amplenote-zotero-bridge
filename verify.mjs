@@ -7,7 +7,7 @@ const root = new URL("./", import.meta.url);
 const run = args => spawnSync(process.execPath, args, { cwd: fileURLToPath(root), encoding: "utf8", timeout: 60000 });
 const build = run(["build.mjs"]);
 if (build.status !== 0) throw new Error("Build failed: " + (build.stderr || build.error || build.stdout));
-const testFiles = ["test/core.test.mjs", "test/plugin.test.mjs", "test/auto-sync.test.mjs"];
+const testFiles = ["test/core.test.mjs", "test/plugin.test.mjs", "test/auto-sync.test.mjs", "test/fulltext.test.mjs"];
 const result = run(["--test", "--test-reporter=tap", ...testFiles]);
 await mkdir(new URL("evidence/", root), { recursive: true });
 await writeFile(new URL("evidence/tests.tap", root), result.stdout + (result.stderr || ""));
