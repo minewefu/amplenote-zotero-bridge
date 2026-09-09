@@ -1,5 +1,19 @@
 # Amplenote host test results
 
+## September 9 checkpoint: 0.2.2
+
+The 0.2.2 source was published at `351928fa21ff1aa4d2034a4ac9aed95f31791605`, copied into the existing plugin note, and copied back for comparison. All 40,697 normalized source characters matched. The note reported synchronized state. Automatic sync was off before replacement; it was not enabled during this test.
+
+The saved public-library configuration was read back after a client refresh. A search for `A Unified Zotero Experience` returned its intended public reference. Selecting it for PDF copying ended with `Zotero action stopped: Failed to fetch`; this was not a successful import.
+
+Separate read-only protocol checks downloaded the public example's 329,157-byte PDF and matched its Zotero metadata checksum. The redirected Zotero S3 server returns no CORS permission for the plugin origin and rejects preflight with HTTP 403. Amplenote's documented CORS proxy returns HTTP 400 for the Zotero API URL; Zotero is absent from the documented allowlist. Browser PDF copying remains blocked pending a supported file-access route.
+
+An original one-page PDF fixture rendered correctly. The separate native attachment diagnostic has not been executed; no successful native PDF upload or viewing is claimed.
+
+The 75 local tests include a before/after regression for accepting a mismatched PDF version, binary checksum boundaries, and an upload using the generated bundle with a simulated host. Those tests do not substitute for the failed real browser download.
+
+## Earlier 0.2.1 checks
+
 Observed September 8, 2026 in Chrome on Windows, using Zotero Bridge 0.2.1 and Zotero's documented public example library. These are actual Amplenote observations, separate from the 70 local fixture tests. The full host test plan and bounty requirements are not yet satisfied.
 
 ## Verified behavior
