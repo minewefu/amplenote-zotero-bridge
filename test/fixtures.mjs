@@ -1,4 +1,5 @@
 // Entirely synthetic fixtures. This module never contacts Zotero or Amplenote.
+import { createHash } from "node:crypto";
 export function reference(key = "ITEM0001", overrides = {}) {
   return { key, version: 7, library: { type: "user", id: 123 },
     citation: "<span>(Example, 2026)</span>", bib: "<div>Example. <i>Sample research</i>. 2026.</div>",
@@ -40,7 +41,13 @@ export function service({ items = [reference()], children = {}, files = {}, inte
     const query = (u.searchParams.get("q") || "").toLowerCase();
     if (query) rows = rows.filter(row => JSON.stringify([row.data.title, row.data.creators, row.data.date]).toLowerCase().includes(query));
     const start = Number(u.searchParams.get("start") || 0), limit = Number(u.searchParams.get("limit") || 100);
-    return jsonResponse(rows.slice(start, start + limit));
+    return jsonResponse(rows.slice(start, start + limit).map(item => {
+      const file = files[item.key];
+      if (file && item.data?.itemType === "attachment" && !Object.hasOwn(item.data, "md5")) {
+        return { ...item, data: { ...item.data, md5: createHash("md5").update(file).digest("hex") } };
+      }
+      return item;
+    }));
   };
   return { fetch, calls, items, children, files };
 }

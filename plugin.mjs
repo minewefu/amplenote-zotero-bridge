@@ -63,7 +63,7 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
       const d = attachment.data || {};
       if (d.itemType === "attachment" && d.contentType === "application/pdf" &&
           ["imported_file", "imported_url"].includes(d.linkMode)) {
-        downloads.push([Core.itemKey(attachment), await client.request(`items/${Core.itemKey(attachment)}/file`, {}, true)]);
+        downloads.push([Core.itemKey(attachment), await client.downloadAttachment(attachment)]);
       }
     }
   }

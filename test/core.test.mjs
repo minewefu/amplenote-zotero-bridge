@@ -1,9 +1,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { ZoteroCore as Core } from "../core.mjs";
 import { reference, service, jsonResponse, pdf, note, annotation } from "./fixtures.mjs";
 
 const settings = extras => ({ libraryId: "123", ...extras });
+
+test("file checksum matches RFC 1321 vectors and an independent implementation", () => {
+  const vectors = [
+    ["", "d41d8cd98f00b204e9800998ecf8427e"], ["a", "0cc175b9c0f1b6a831c399e269772661"],
+    ["abc", "900150983cd24fb0d6963f7d28e17f72"], ["message digest", "f96b697d7cb7938d525a2f31aaf161d0"],
+    ["abcdefghijklmnopqrstuvwxyz", "c3fcd3d76192e4007dfb496cca67e13b"],
+    ["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "d174ab98d277d9f5a5611c2c9f419d9f"],
+    ["1234567890".repeat(8), "57edf4a22be3c955ac49da2e2107b67a"]
+  ];
+  for (const [input, expected] of vectors) assert.equal(Core.fileChecksum(new TextEncoder().encode(input)), expected);
+  for (const size of [...Array.from({ length: 260 }, (_, i) => i), 1024, 65535, 329157, 1000000]) {
+    const backing = Uint8Array.from({ length: size + 7 }, (_, i) => (i * 73 + (i >> 3)) & 255);
+    const bytes = backing.subarray(3, size + 3);
+    assert.equal(Core.fileChecksum(bytes), createHash("md5").update(bytes).digest("hex"), `length ${size}`);
+  }
+});
+
+test("PDF download checks bytes even when ETag is unavailable", async () => {
+  const bytes = new TextEncoder().encode("source PDF fixture");
+  const checksum = createHash("md5").update(bytes).digest("hex");
+  const attachment = { ...pdf, data: { ...pdf.data, md5: checksum.toUpperCase() } };
+  const s = service({ files: { PDFD0001: bytes } });
+  const client = new Core.Client(settings(), s.fetch);
+  assert.equal(await client.downloadAttachment(attachment), "data:application/pdf;base64," + Buffer.from(bytes).toString("base64"));
+  attachment.data.md5 = "0".repeat(32);
+  await assert.rejects(client.downloadAttachment(attachment), /file version/);
+});
+
+test("missing or malformed cloud-file checksum stops before download", async () => {
+  const s = service(), client = new Core.Client(settings(), s.fetch);
+  for (const md5 of [undefined, null, "", "not-a-checksum"]) {
+    await assert.rejects(client.downloadAttachment({ ...pdf, data: { ...pdf.data, md5 } }), /cloud-file checksum/);
+  }
+  assert.equal(s.calls.length, 0);
+});
 
 test("fetch uses the browser global receiver rather than the Client instance", async () => {
   const s = service();

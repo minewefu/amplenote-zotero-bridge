@@ -20,6 +20,39 @@ const ZoteroCore = (() => {
   const KEY = /^[A-Z0-9]{8}$/;
   const MARKER = "Zotero import revision: ";
 
+  // RFC 1321 checksum for Zotero file-version comparison only, not authentication.
+  // Web Crypto does not expose MD5. Keep the implementation local to the bundle.
+  const MD5_CONSTANTS = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) >>> 0);
+  const MD5_SHIFTS = [[7, 12, 17, 22], [5, 9, 14, 20], [4, 11, 16, 23], [6, 10, 15, 21]];
+  function fileChecksum(bytes) {
+    if (!(bytes instanceof Uint8Array)) throw new TypeError("File checksum requires bytes.");
+    let state = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476];
+    const block = view => {
+      let [a, b, c, d] = state;
+      for (let i = 0; i < 64; i++) {
+        let f, word;
+        if (i < 16) { f = (b & c) | (~b & d); word = i; }
+        else if (i < 32) { f = (d & b) | (~d & c); word = (5 * i + 1) % 16; }
+        else if (i < 48) { f = b ^ c ^ d; word = (3 * i + 5) % 16; }
+        else { f = c ^ (b | ~d); word = (7 * i) % 16; }
+        const value = (a + f + MD5_CONSTANTS[i] + view.getUint32(word * 4, true)) | 0;
+        const shift = MD5_SHIFTS[i >> 4][i % 4];
+        const next = (b + ((value << shift) | (value >>> (32 - shift)))) | 0;
+        a = d; d = c; c = b; b = next;
+      }
+      state = [(state[0] + a) | 0, (state[1] + b) | 0, (state[2] + c) | 0, (state[3] + d) | 0];
+    };
+    const full = bytes.length - bytes.length % 64;
+    for (let offset = 0; offset < full; offset += 64) block(new DataView(bytes.buffer, bytes.byteOffset + offset, 64));
+    const tail = new Uint8Array(bytes.length % 64 < 56 ? 64 : 128);
+    tail.set(bytes.subarray(full)); tail[bytes.length % 64] = 0x80;
+    const ending = new DataView(tail.buffer);
+    ending.setUint32(tail.length - 8, (bytes.length * 8) >>> 0, true);
+    ending.setUint32(tail.length - 4, Math.floor(bytes.length / 536870912), true);
+    for (let offset = 0; offset < tail.length; offset += 64) block(new DataView(tail.buffer, offset, 64));
+    return state.map(word => [0, 8, 16, 24].map(shift => ((word >>> shift) & 255).toString(16).padStart(2, "0")).join("")).join("");
+  }
+
   function config(input = {}) {
     const c = {
       libraryType: input.libraryType || "users",
@@ -191,7 +224,7 @@ const ZoteroCore = (() => {
       this.backoffUntil = 0;
       this.libraryVersion = null;
     }
-    async request(path, query = {}, binary = false) {
+    async request(path, query = {}, binary = false, expectedFileChecksum = null) {
       if (!/^(items|collections)(\/[A-Z0-9]{8})?(\/(children|file|items|top))?(\/top)?$/.test(path)) {
         throw new Error("Unsupported Zotero resource path.");
       }
@@ -207,7 +240,7 @@ const ZoteroCore = (() => {
         const backoff = Number(response.headers.get("Backoff") || response.headers.get("Retry-After") || 0);
         if (Number.isFinite(backoff) && backoff > 0) this.backoffUntil = Date.now() + backoff * 1000;
         if (!response.ok) throw new Error(`Zotero request failed (HTTP ${response.status}). No automatic retry was made.`);
-        if (binary) return await this.readFile(response);
+        if (binary) return await this.readFile(response, expectedFileChecksum);
         const version = response.headers.get("Last-Modified-Version");
         if (version && this.libraryVersion && version !== this.libraryVersion) {
           throw new Error("The Zotero library changed during sync. Run sync again for a consistent snapshot.");
@@ -253,7 +286,14 @@ const ZoteroCore = (() => {
       }
       return { children, annotations };
     }
-    async readFile(response) {
+    async downloadAttachment(attachment) {
+      const checksum = attachment.data?.md5;
+      if (typeof checksum !== "string" || !/^[a-f0-9]{32}$/i.test(checksum)) {
+        throw new Error("Zotero has no valid cloud-file checksum for this PDF. Finish syncing its file to Zotero storage before copying it.");
+      }
+      return this.request(`items/${itemKey(attachment)}/file`, {}, true, checksum.toLowerCase());
+    }
+    async readFile(response, expectedFileChecksum = null) {
       const max = this.config.maxAttachmentBytes, length = Number(response.headers.get("Content-Length") || 0);
       if (length > max) { await response.body?.cancel(); throw new Error("Attachment exceeds configured size limit."); }
       const chunks = []; let size = 0;
@@ -275,6 +315,9 @@ const ZoteroCore = (() => {
       }
       const bytes = new Uint8Array(size); let offset = 0;
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+      if (expectedFileChecksum !== null && fileChecksum(bytes) !== expectedFileChecksum) {
+        throw new Error("The PDF file version no longer matches its Zotero metadata checksum. Run sync again after Zotero finishes syncing its file.");
+      }
       const mime = (response.headers.get("Content-Type") || "application/octet-stream").split(";")[0].trim();
       if (!/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(mime)) throw new Error("Attachment has an invalid content type.");
       let binary = "";
@@ -283,7 +326,7 @@ const ZoteroCore = (() => {
     }
   }
 
-  return { config, Client, itemKey, identity, identityTag, itemURL, escapeMarkdown, htmlToMarkdown,
+  return { config, Client, fileChecksum, itemKey, identity, identityTag, itemURL, escapeMarkdown, htmlToMarkdown,
     safeURL, tagNames, selected, revision, render, MARKER };
 })();
 const Core = ZoteroCore;
@@ -351,7 +394,7 @@ async function importReference(app, client, snapshot, canContinue = () => true) 
       const d = attachment.data || {};
       if (d.itemType === "attachment" && d.contentType === "application/pdf" &&
           ["imported_file", "imported_url"].includes(d.linkMode)) {
-        downloads.push([Core.itemKey(attachment), await client.request(`items/${Core.itemKey(attachment)}/file`, {}, true)]);
+        downloads.push([Core.itemKey(attachment), await client.downloadAttachment(attachment)]);
       }
     }
   }

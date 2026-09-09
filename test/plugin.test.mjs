@@ -135,6 +135,20 @@ test("optional PDF copy uses data URL upload; repeat does not upload again", asy
   assert.equal((await run()).unchanged, 1); assert.equal(app.uploads.length, 1);
 });
 
+test("a changed PDF is rejected before note creation or upload", async () => {
+  const stale = structuredClone(pdf);
+  stale.data.md5 = "d41d8cd98f00b204e9800998ecf8427e"; // Metadata for the empty file.
+  const { app, run } = setup({ copyAttachments: true }, {
+    children: { ITEM0001: [stale] }, files: { PDFD0001: new TextEncoder().encode("a different file version") }
+  });
+  const result = await run();
+  assert.equal(result.failed, 1);
+  assert.equal(result.created, 0);
+  assert.equal(app.notes.size, 0);
+  assert.equal(app.uploads.length, 0);
+  assert.match(result.error, /file version|checksum/i);
+});
+
 test("attachment size failure occurs before creating a note", async () => {
   const { app, run } = setup({ copyAttachments: true, maxAttachmentBytes: 2 }, { children: { ITEM0001: [pdf] }, files: { PDFD0001: new Uint8Array([1, 2, 3]) } });
   assert.equal((await run()).failed, 1); assert.equal(app.notes.size, 0); assert.equal(app.uploads.length, 0);
@@ -294,6 +308,19 @@ test("generated plugin preserves the native fetch receiver in the browser realm"
   const result = await plugin.appOption["Sync selected references"].call(plugin, app);
   assert.equal(result?.created, 1, app.alerts.join("\n"));
   assert.equal(app.notes.size, 1);
+});
+
+test("generated browser bundle verifies a PDF before its native upload", async () => {
+  const source = await readFile(new URL("../dist/plugin.js", import.meta.url), "utf8");
+  const s = service({ children: { ITEM0001: [pdf] }, files: { PDFD0001: new TextEncoder().encode("browser realm PDF fixture") } });
+  const app = new FakeApp({ copyAttachments: true });
+  const context = { fetch: s.fetch, URL, Response, AbortController, setTimeout, clearTimeout, TextEncoder, crypto: globalThis.crypto, btoa };
+  const plugin = vm.runInNewContext("(" + source + ")", context, { timeout: 1000 });
+  const result = await plugin.appOption["Sync selected references"].call(plugin, app);
+  assert.equal(result.created, 1, app.alerts.join("\n"));
+  assert.equal(app.uploads.length, 1);
+  assert.equal((await plugin.appOption["Sync selected references"].call(plugin, app)).unchanged, 1);
+  assert.equal(app.uploads.length, 1);
 });
 
 test("installation note contains only supported metadata keys and no repeated blank code lines", async () => {

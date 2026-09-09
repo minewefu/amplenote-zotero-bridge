@@ -1,5 +1,11 @@
 # Changes
 
+## 0.2.2 — September 9, 2026
+
+PDF copying now compares the downloaded bytes with Zotero's metadata checksum before creating a note or uploading a file. Missing cloud-file checksums and changed files stop with an actionable error. The check works without an exposed ETag header. A regression test reproduced the old importer accepting a mismatched version.
+
+All 75 local tests pass, including RFC checksum vectors, binary boundary comparisons against Node's implementation, and an upload through the generated browser bundle. A read-only public Zotero example downloaded 329,157 bytes and matched its metadata checksum. This does not establish browser CORS, Amplenote upload, private access or complete host coverage.
+
 ## 0.2.1 — September 8, 2026
 
 Live Amplenote testing found that storing native `fetch` as a Client method changed its receiver and caused Illegal invocation. The client now binds fetch to the browser global. Error handling now retains string and cross-realm host messages while redacting known keys.
