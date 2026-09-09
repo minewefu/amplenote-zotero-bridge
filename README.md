@@ -2,6 +2,8 @@
 
 Development candidate 0.2.2. **Not submitted or represented as bounty-complete.** The earlier 0.2.1 build passed public-library preview, single-reference import/repeat, manual-text preservation, cursor citation/bibliography insertion, and automatic start/repeat/navigation/stop inside Amplenote. Version 0.2.2 adds PDF file-version checks; its installation, exact source readback, configuration persistence and public reference search were exercised in the host. Browser PDF copying currently fails because Zotero's file server does not permit the plugin origin and Zotero is not on Amplenote's proxy allowlist. See `HOST_TEST_RESULTS.md` for the exact scope.
 
+A separate native upload check found that the normal note toolbar can upload and display an original PDF, while `app.attachNoteMedia` returned `NetworkError` for the same data. The supported plugin-driven document-upload method remains unresolved; the fixture and reproduction are in `diagnostics/`.
+
 This plugin imports Zotero reference metadata, abstracts, child notes, and text annotations into Amplenote. It searches references and inserts formatted citations or bibliography entries at the current cursor. Zotero access is read-only. Changed imports are prepended as revisions so existing text and manual notes remain.
 
 ## Local verification

@@ -8,7 +8,9 @@ The saved public-library configuration was read back after a client refresh. A s
 
 Separate read-only protocol checks downloaded the public example's 329,157-byte PDF and matched its Zotero metadata checksum. The redirected Zotero S3 server returns no CORS permission for the plugin origin and rejects preflight with HTTP 403. Amplenote's documented CORS proxy returns HTTP 400 for the Zotero API URL; Zotero is absent from the documented allowlist. Browser PDF copying remains blocked pending a supported file-access route.
 
-An original one-page PDF fixture rendered correctly. The separate native attachment diagnostic has not been executed; no successful native PDF upload or viewing is claimed.
+The separate native attachment diagnostic now ran twice. `app.attachNoteMedia` returned `NetworkError` first on a newly created test note and then on its saved, permanent UUID. The subsequent normal toolbar upload succeeded. Amplenote's viewer rendered the original one-page PDF, and a native `getNoteAttachments`/`getAttachmentURL` read through the documented CORS proxy returned exactly 1,924 bytes with the original SHA-256 (`b34f9d202c3aa66e479919921033efdd5404e1f1c5d76ce1eefdb98fe6a63e3b`). This proves the normal UI upload/view/read path, not successful plugin-driven PDF upload. The original plugin source was restored and copied back for exact verification; optional PDF copying and automatic sync were left off.
+
+The [original fixture and diagnostic](diagnostics/README.md) provide a reproducible case for the supported plugin-upload-method question. Both that request and the separate Zotero CORS allowlist request were sent to support. No bounty acceptance has been received.
 
 The 75 local tests include a before/after regression for accepting a mismatched PDF version, binary checksum boundaries, and an upload using the generated bundle with a simulated host. Those tests do not substitute for the failed real browser download.
 
